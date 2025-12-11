@@ -141,5 +141,5 @@ def vista_cuadros_page():
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     vista_cuadros_page()
