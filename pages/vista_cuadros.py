@@ -131,34 +131,39 @@ def vista_cuadros_page():
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("💾 Guardar Resultados"):
-                # Guardar todos los resultados
-                for cuadro_num, resultados in todos_resultados.items():
-                    for partido, datos in resultados.items():
-                        db.guardar_resultado_partido(
-                            categoria['id'],
-                            cuadro_num,
-                            datos['jugador1'],
-                            datos['jugador2'],
-                            datos['resultado'],
-                            datos['ganador']
-                        )
-                
-                st.success("Resultados guardados exitosamente!")
-                st.rerun()
+            guardar_clicked = st.button("💾 Guardar Resultados")
         
         with col2:
             # Habilitar botón de llaves solo si todos los cuadros están completos
-            if cuadros_completos == len([c for c in cuadros.values() if len(c) >= 2]):
-                if st.button("🏆 Generar Llaves", key="generar_llaves_admin"):
-                    st.session_state.current_page = 'vista_llaves'
-                    st.rerun()
+            cuadros_totales = len([c for c in cuadros.values() if len(c) >= 2])
+            if cuadros_completos == cuadros_totales:
+                llaves_clicked = st.button("🏆 Generar Llaves")
             else:
-                st.button("🏆 Generar Llaves", disabled=True, help="Completa todos los cuadros primero", key="generar_llaves_disabled")
+                st.button("🏆 Generar Llaves", disabled=True, help="Completa todos los cuadros primero")
+                llaves_clicked = False
+        
+        # Procesar clicks
+        if guardar_clicked:
+            for cuadro_num, resultados in todos_resultados.items():
+                for partido, datos in resultados.items():
+                    db.guardar_resultado_partido(
+                        categoria['id'],
+                        cuadro_num,
+                        datos['jugador1'],
+                        datos['jugador2'],
+                        datos['resultado'],
+                        datos['ganador']
+                    )
+            st.success("Resultados guardados exitosamente!")
+            st.rerun()
+        
+        if llaves_clicked:
+            st.session_state.current_page = 'vista_llaves'
+            st.rerun()
     
     else:
         # Solo mostrar botón de llaves para visualización
-        if st.button("🏆 Ver Llaves", key="ver_llaves_competitor"):
+        if st.button("🏆 Ver Llaves"):
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
 
