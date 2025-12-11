@@ -28,37 +28,51 @@ def vista_cuadros_page():
         border-radius: 10px;
         padding: 15px;
         box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        overflow-x: auto;
     }
-    .header-cell {
+    .round-robin-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .round-robin-table th {
         background: #2c3e50;
         color: white;
         padding: 12px 8px;
         text-align: center;
         font-weight: bold;
-        border-radius: 5px;
-        margin: 2px;
+        border: 1px solid #34495e;
     }
-    .player-cell {
+    .round-robin-table td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #bdc3c7;
+        vertical-align: middle;
+        height: 45px;
+    }
+    .player-name-cell {
         background: #34495e;
         color: white;
-        padding: 12px 8px;
         font-weight: bold;
-        border-radius: 5px;
-        margin: 2px;
-        text-align: center;
+        text-align: left;
+        padding-left: 12px;
     }
     .diagonal-cell {
         background: linear-gradient(45deg, #2c3e50, #34495e);
-        height: 45px;
-        border-radius: 5px;
-        margin: 2px;
     }
     .result-cell {
         background: #ecf0f1;
-        border: 2px solid #bdc3c7;
-        border-radius: 5px;
-        margin: 2px;
-        text-align: center;
+    }
+    .result-win {
+        background: #27ae60;
+        color: white;
+        font-weight: bold;
+    }
+    .result-loss {
+        background: #e74c3c;
+        color: white;
         font-weight: bold;
     }
     .info-badge {
@@ -153,24 +167,30 @@ def vista_cuadros_page():
         
         # ======== GENERAR TABLA ROUND ROBIN ========
         
-        # Encabezado con diseño mejorado
-        cols = st.columns([2] + [1 for _ in jugadores])
-        cols[0].markdown("<div class='header-cell'>DEPORTISTA / EQUIPO</div>", unsafe_allow_html=True)
-        for i, j in enumerate(jugadores):
-            cols[i+1].markdown(f"<div class='header-cell'>{i+1}</div>", unsafe_allow_html=True)
+        # Crear tabla HTML
+        tabla_html = "<table class='round-robin-table'>"
         
-        # Filas con mejor diseño
+        # Encabezado
+        tabla_html += "<thead><tr>"
+        tabla_html += "<th>DEPORTISTA / EQUIPO</th>"
+        for i in range(len(jugadores)):
+            tabla_html += f"<th>{i+1}</th>"
+        tabla_html += "</tr></thead>"
+        
+        # Cuerpo de la tabla
+        tabla_html += "<tbody>"
+        
         for i, jugador_fila in enumerate(jugadores):
-            cols = st.columns([2] + [1 for _ in jugadores])
+            tabla_html += "<tr>"
             
-            # Nombre del jugador con número
-            cols[0].markdown(f"<div class='player-cell'>{i+1}. {jugador_fila}</div>", unsafe_allow_html=True)
+            # Nombre del jugador
+            tabla_html += f"<td class='player-name-cell'>{i+1}. {jugador_fila}</td>"
             
             for j, jugador_col in enumerate(jugadores):
                 
-                # Celda diagonal elegante
+                # Celda diagonal
                 if i == j:
-                    cols[j+1].markdown("<div class='diagonal-cell'></div>", unsafe_allow_html=True)
+                    tabla_html += "<td class='diagonal-cell'></td>"
                     continue
                 
                 # Buscar resultado guardado
@@ -187,49 +207,76 @@ def vista_cuadros_page():
                         ganador_guardado = partido['ganador']
                         break
                 
-                # Celda editable si tiene permisos
-                if puede_editar:
-                    opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
-                    index_actual = opciones.index(resultado_guardado) if resultado_guardado in opciones else 0
-                    
-                    key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
-                    
-                    nuevo_resultado = cols[j+1].selectbox(
-                        "",
-                        opciones,
-                        index=index_actual,
-                        key=key,
-                        label_visibility="collapsed"
-                    )
-                    
-                    # Guardar si cambió
-                    if nuevo_resultado and nuevo_resultado != resultado_guardado:
-                        ganador = jugador_fila if nuevo_resultado in ["3-0", "3-1", "3-2"] else jugador_col
-                        
-                        db.guardar_resultado_partido(
-                            categoria['id'],
-                            cuadro_num,
-                            jugador_fila,
-                            jugador_col,
-                            nuevo_resultado,
-                            ganador
-                        )
-                        st.rerun()
-                
-                # Solo mostrar resultados si NO tiene permisos
-                else:
-                    if resultado_guardado:
-                        # Colorear según ganador
-                        color = "#27ae60" if ganador_guardado == jugador_fila else "#e74c3c"
-                        cols[j+1].markdown(
-                            f"<div class='result-cell' style='background: {color}; color: white;'><strong>{resultado_guardado}</strong></div>", 
-                            unsafe_allow_html=True
-                        )
+                # Determinar clase CSS según resultado
+                if resultado_guardado:
+                    if ganador_guardado == jugador_fila:
+                        cell_class = "result-win"
                     else:
-                        cols[j+1].markdown("<div class='result-cell'>-</div>", unsafe_allow_html=True)
+                        cell_class = "result-loss"
+                    tabla_html += f"<td class='{cell_class}'>{resultado_guardado}</td>"
+                else:
+                    tabla_html += "<td class='result-cell'>-</td>"
+            
+            tabla_html += "</tr>"
         
-        # Cerrar containers
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        tabla_html += "</tbody></table>"
+        
+        # Mostrar tabla
+        st.markdown(tabla_html, unsafe_allow_html=True)
+        
+        # Si puede editar, mostrar controles por separado
+        if puede_editar:
+            st.markdown("**Editar Resultados:**")
+            
+            # Crear selectboxes organizados
+            for i, jugador_fila in enumerate(jugadores):
+                for j, jugador_col in enumerate(jugadores):
+                    if i != j:  # No mostrar para diagonal
+                        
+                        # Buscar resultado actual
+                        resultado_actual = ""
+                        for partido in partidos_guardados:
+                            if (
+                                partido['cuadro_numero'] == cuadro_num and
+                                partido['jugador1'] == jugador_fila and
+                                partido['jugador2'] == jugador_col
+                            ):
+                                resultado_actual = partido['resultado']
+                                break
+                        
+                        # Crear selectbox
+                        opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
+                        index_actual = opciones.index(resultado_actual) if resultado_actual in opciones else 0
+                        
+                        key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
+                        
+                        nuevo_resultado = st.selectbox(
+                            f"{jugador_fila} vs {jugador_col}",
+                            opciones,
+                            index=index_actual,
+                            key=key
+                        )
+                        
+                        # Guardar si cambió
+                        if nuevo_resultado and nuevo_resultado != resultado_actual:
+                            ganador = jugador_fila if nuevo_resultado in ["3-0", "3-1", "3-2"] else jugador_col
+                            
+                            db.guardar_resultado_partido(
+                                categoria['id'],
+                                cuadro_num,
+                                jugador_fila,
+                                jugador_col,
+                                nuevo_resultado,
+                                ganador
+                            )
+                            st.rerun()
+        
+            # Cerrar containers
+            st.markdown("</div></div>", unsafe_allow_html=True)
+        else:
+            # Cerrar containers para modo solo lectura
+            st.markdown("</div></div>", unsafe_allow_html=True)
+        
         st.markdown("<br>", unsafe_allow_html=True)
     
     # ======== BOTONES FINALES ELEGANTES ========
