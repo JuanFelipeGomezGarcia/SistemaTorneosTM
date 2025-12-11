@@ -1,6 +1,6 @@
 import streamlit as st
 from database.db_operations import DatabaseOperations
-from utils.tournament_utils import generar_cuadros, mostrar_cuadro, validar_cuadros_completos
+from utils.tournament_utils import generar_cuadros
 
 def vista_cuadros_page():
     """Página para mostrar y editar los cuadros de una categoría"""
@@ -41,8 +41,8 @@ def vista_cuadros_page():
     # Mostrar cuadros
     st.subheader("Cuadros de la Categoría")
     
-    todos_resultados = {}
-    cuadros_completos = 0
+    # Obtener resultados guardados
+    partidos_guardados = db.obtener_partidos(categoria['id'])
     
     for cuadro_num, participantes_cuadro in cuadros.items():
         if len(participantes_cuadro) >= 2:
@@ -54,22 +54,7 @@ def vista_cuadros_page():
                 if i + 1 < len(participantes_cuadro):
                     enfrentamientos.append((participantes_cuadro[i], participantes_cuadro[i + 1]))
             
-            # Obtener resultados guardados
-            partidos_guardados = db.obtener_partidos(categoria['id'])
-            resultados_cuadro = {}
-            
-            for partido in partidos_guardados:
-                if partido['cuadro_numero'] == cuadro_num:
-                    key = f"{partido['jugador1']}_vs_{partido['jugador2']}"
-                    resultados_cuadro[key] = {
-                        'resultado': partido['resultado'],
-                        'ganador': partido['ganador']
-                    }
-            
             # Mostrar enfrentamientos
-            resultados_nuevos = {}
-            partidos_completos = 0
-            
             for idx, (jugador1, jugador2) in enumerate(enfrentamientos):
                 col1, col2, col3 = st.columns([2, 1, 2])
                 
@@ -77,82 +62,61 @@ def vista_cuadros_page():
                     st.write(f"**{jugador1}**")
                 
                 with col2:
-                    key_partido = f"{jugador1}_vs_{jugador2}"
-                    resultado_guardado = resultados_cuadro.get(key_partido, {}).get('resultado', '')
+                    # Buscar resultado guardado
+                    resultado_guardado = ""
+                    for partido in partidos_guardados:
+                        if (partido['cuadro_numero'] == cuadro_num and 
+                            partido['jugador1'] == jugador1 and 
+                            partido['jugador2'] == jugador2):
+                            resultado_guardado = partido['resultado']
+                            break
                     
                     if puede_editar:
-                        resultado_key = f"resultado_{cuadro_num}_{idx}"
+                        resultado_key = f"resultado_{cuadro_num}_{idx}_{jugador1}_{jugador2}"
+                        opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
+                        index_actual = opciones.index(resultado_guardado) if resultado_guardado in opciones else 0
+                        
                         resultado = st.selectbox(
                             "Resultado",
-                            ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
-                            index=["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"].index(resultado_guardado) if resultado_guardado else 0,
+                            opciones,
+                            index=index_actual,
                             key=resultado_key
                         )
                         
-                        if resultado:
-                            if resultado in ["3-0", "3-1", "3-2"]:
-                                ganador = jugador1
-                            else:
-                                ganador = jugador2
-                            
-                            resultados_nuevos[key_partido] = {
-                                'resultado': resultado,
-                                'ganador': ganador,
-                                'jugador1': jugador1,
-                                'jugador2': jugador2
-                            }
-                            partidos_completos += 1
+                        # Guardar resultado automáticamente si cambia
+                        if resultado and resultado != resultado_guardado:
+                            ganador = jugador1 if resultado in ["3-0", "3-1", "3-2"] else jugador2
+                            db.guardar_resultado_partido(
+                                categoria['id'],
+                                cuadro_num,
+                                jugador1,
+                                jugador2,
+                                resultado,
+                                ganador
+                            )
+                            st.rerun()
                     else:
                         if resultado_guardado:
                             st.write(f"**{resultado_guardado}**")
-                            partidos_completos += 1
                         else:
                             st.write("vs")
                 
                 with col3:
-                    # Mostrar ganador si hay resultado
-                    key_partido = f"{jugador1}_vs_{jugador2}"
-                    ganador = resultados_cuadro.get(key_partido, {}).get('ganador', '')
-                    if ganador == jugador2:
-                        st.write(f"**{jugador2}** 🏆")
-                    else:
-                        st.write(jugador2)
+                    st.write(f"**{jugador2}**")
             
-            # Verificar si el cuadro está completo
-            if partidos_completos == len(enfrentamientos):
-                cuadros_completos += 1
-                st.success(f"✅ Cuadro {cuadro_num} completado")
-            
-            todos_resultados[cuadro_num] = resultados_nuevos
             st.markdown("---")
     
-    # Botones de acción
-    if puede_editar:
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("💾 Guardar Resultados"):
-                for cuadro_num, resultados in todos_resultados.items():
-                    for partido, datos in resultados.items():
-                        if all(k in datos for k in ['jugador1', 'jugador2', 'resultado', 'ganador']):
-                            db.guardar_resultado_partido(
-                                categoria['id'],
-                                cuadro_num,
-                                datos['jugador1'],
-                                datos['jugador2'],
-                                datos['resultado'],
-                                datos['ganador']
-                            )
-                st.success("Resultados guardados!")
-                st.rerun()
-        
-        with col2:
-            if st.button("🏆 Ir a Llaves"):
-                st.session_state.current_page = 'vista_llaves'
-                st.rerun()
+    # Botón para ir a llaves (siempre activo)
+    st.markdown("### Acciones")
+    col1, col2 = st.columns(2)
     
-    else:
-        if st.button("🏆 Ver Llaves"):
+    with col1:
+        if st.button("💾 Actualizar Página"):
+            st.rerun()
+    
+    with col2:
+        boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
+        if st.button(boton_text):
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
 
