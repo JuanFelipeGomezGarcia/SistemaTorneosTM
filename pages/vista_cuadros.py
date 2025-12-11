@@ -150,15 +150,15 @@ def vista_cuadros_page():
         with col2:
             # Habilitar botón de llaves solo si todos los cuadros están completos
             if cuadros_completos == len([c for c in cuadros.values() if len(c) >= 2]):
-                if st.button("🏆 Generar Llaves"):
+                if st.button("🏆 Generar Llaves", key="generar_llaves_admin"):
                     st.session_state.current_page = 'vista_llaves'
                     st.rerun()
             else:
-                st.button("🏆 Generar Llaves", disabled=True, help="Completa todos los cuadros primero")
+                st.button("🏆 Generar Llaves", disabled=True, help="Completa todos los cuadros primero", key="generar_llaves_disabled")
     
     else:
         # Solo mostrar botón de llaves para visualización
-        if st.button("🏆 Ver Llaves"):
+        if st.button("🏆 Ver Llaves", key="ver_llaves_competitor"):
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
 
