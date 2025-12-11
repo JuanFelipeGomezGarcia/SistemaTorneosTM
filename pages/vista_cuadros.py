@@ -144,20 +144,23 @@ def vista_cuadros_page():
         
         # Procesar clicks
         if guardar_clicked:
-            for cuadro_num, resultados in todos_resultados.items():
-                for partido, datos in resultados.items():
-                    db.guardar_resultado_partido(
-                        categoria['id'],
-                        cuadro_num,
-                        datos['jugador1'],
-                        datos['jugador2'],
-                        datos['resultado'],
-                        datos['ganador']
-                    )
-            st.success("Resultados guardados exitosamente!")
-            st.rerun()
+            try:
+                for cuadro_num, resultados in todos_resultados.items():
+                    for partido, datos in resultados.items():
+                        db.guardar_resultado_partido(
+                            categoria['id'],
+                            cuadro_num,
+                            datos['jugador1'],
+                            datos['jugador2'],
+                            datos['resultado'],
+                            datos['ganador']
+                        )
+                st.success("Resultados guardados exitosamente!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error guardando resultados: {e}")
         
-        if llaves_clicked:
+        if 'llaves_clicked' in locals() and llaves_clicked:
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
     
