@@ -167,30 +167,24 @@ def vista_cuadros_page():
         
         # ======== GENERAR TABLA ROUND ROBIN ========
         
-        # Crear tabla HTML
-        tabla_html = "<table class='round-robin-table'>"
-        
-        # Encabezado
-        tabla_html += "<thead><tr>"
-        tabla_html += "<th>DEPORTISTA / EQUIPO</th>"
+        # Encabezado de la tabla
+        cols = st.columns([2] + [1 for _ in jugadores])
+        cols[0].markdown("<div style='background: #2c3e50; color: white; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #34495e;'>DEPORTISTA / EQUIPO</div>", unsafe_allow_html=True)
         for i in range(len(jugadores)):
-            tabla_html += f"<th>{i+1}</th>"
-        tabla_html += "</tr></thead>"
+            cols[i+1].markdown(f"<div style='background: #2c3e50; color: white; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #34495e;'>{i+1}</div>", unsafe_allow_html=True)
         
-        # Cuerpo de la tabla
-        tabla_html += "<tbody>"
-        
+        # Filas de la tabla
         for i, jugador_fila in enumerate(jugadores):
-            tabla_html += "<tr>"
+            cols = st.columns([2] + [1 for _ in jugadores])
             
             # Nombre del jugador
-            tabla_html += f"<td class='player-name-cell'>{i+1}. {jugador_fila}</td>"
+            cols[0].markdown(f"<div style='background: #34495e; color: white; padding: 12px; font-weight: bold; border: 1px solid #bdc3c7; text-align: left; padding-left: 12px;'>{i+1}. {jugador_fila}</div>", unsafe_allow_html=True)
             
             for j, jugador_col in enumerate(jugadores):
                 
                 # Celda diagonal
                 if i == j:
-                    tabla_html += "<td class='diagonal-cell'></td>"
+                    cols[j+1].markdown("<div style='background: linear-gradient(45deg, #2c3e50, #34495e); height: 45px; border: 1px solid #bdc3c7;'></div>", unsafe_allow_html=True)
                     continue
                 
                 # Buscar resultado guardado
@@ -207,58 +201,25 @@ def vista_cuadros_page():
                         ganador_guardado = partido['ganador']
                         break
                 
-                # Determinar clase CSS según resultado
-                if resultado_guardado:
-                    if ganador_guardado == jugador_fila:
-                        cell_class = "result-win"
-                    else:
-                        cell_class = "result-loss"
-                    tabla_html += f"<td class='{cell_class}'>{resultado_guardado}</td>"
-                else:
-                    tabla_html += "<td class='result-cell'>-</td>"
-            
-            tabla_html += "</tr>"
-        
-        tabla_html += "</tbody></table>"
-        
-        # Mostrar tabla
-        st.markdown(tabla_html, unsafe_allow_html=True)
-        
-        # Si puede editar, mostrar controles por separado
-        if puede_editar:
-            st.markdown("**Editar Resultados:**")
-            
-            # Crear selectboxes organizados
-            for i, jugador_fila in enumerate(jugadores):
-                for j, jugador_col in enumerate(jugadores):
-                    if i != j:  # No mostrar para diagonal
-                        
-                        # Buscar resultado actual
-                        resultado_actual = ""
-                        for partido in partidos_guardados:
-                            if (
-                                partido['cuadro_numero'] == cuadro_num and
-                                partido['jugador1'] == jugador_fila and
-                                partido['jugador2'] == jugador_col
-                            ):
-                                resultado_actual = partido['resultado']
-                                break
-                        
-                        # Crear selectbox
-                        opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
-                        index_actual = opciones.index(resultado_actual) if resultado_actual in opciones else 0
-                        
-                        key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
-                        
+                # Celda editable o de solo lectura
+                if puede_editar:
+                    # Selectbox dentro de la celda
+                    opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
+                    index_actual = opciones.index(resultado_guardado) if resultado_guardado in opciones else 0
+                    
+                    key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
+                    
+                    with cols[j+1]:
                         nuevo_resultado = st.selectbox(
-                            f"{jugador_fila} vs {jugador_col}",
+                            "",
                             opciones,
                             index=index_actual,
-                            key=key
+                            key=key,
+                            label_visibility="collapsed"
                         )
                         
                         # Guardar si cambió
-                        if nuevo_resultado and nuevo_resultado != resultado_actual:
+                        if nuevo_resultado and nuevo_resultado != resultado_guardado:
                             ganador = jugador_fila if nuevo_resultado in ["3-0", "3-1", "3-2"] else jugador_col
                             
                             db.guardar_resultado_partido(
@@ -270,12 +231,20 @@ def vista_cuadros_page():
                                 ganador
                             )
                             st.rerun()
+                
+                else:
+                    # Solo mostrar resultado
+                    if resultado_guardado:
+                        if ganador_guardado == jugador_fila:
+                            color = "#27ae60"
+                        else:
+                            color = "#e74c3c"
+                        cols[j+1].markdown(f"<div style='background: {color}; color: white; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #bdc3c7; height: 45px; display: flex; align-items: center; justify-content: center;'>{resultado_guardado}</div>", unsafe_allow_html=True)
+                    else:
+                        cols[j+1].markdown("<div style='background: #ecf0f1; padding: 12px; text-align: center; border: 1px solid #bdc3c7; height: 45px; display: flex; align-items: center; justify-content: center;'>-</div>", unsafe_allow_html=True)
         
-            # Cerrar containers
-            st.markdown("</div></div>", unsafe_allow_html=True)
-        else:
-            # Cerrar containers para modo solo lectura
-            st.markdown("</div></div>", unsafe_allow_html=True)
+        # Cerrar containers
+        st.markdown("</div></div>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
     
