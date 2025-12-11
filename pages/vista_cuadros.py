@@ -131,41 +131,31 @@ def vista_cuadros_page():
         col1, col2 = st.columns(2)
         
         with col1:
-            guardar_clicked = st.button("💾 Guardar Resultados")
-        
-        with col2:
-            # Habilitar botón de llaves solo si todos los cuadros están completos
-            cuadros_totales = len([c for c in cuadros.values() if len(c) >= 2])
-            if cuadros_completos == cuadros_totales:
-                llaves_clicked = st.button("🏆 Generar Llaves")
-            else:
-                st.button("🏆 Generar Llaves", disabled=True, help="Completa todos los cuadros primero")
-                llaves_clicked = False
-        
-        # Procesar clicks
-        if guardar_clicked:
-            try:
+            if st.button("💾 Guardar Resultados"):
                 for cuadro_num, resultados in todos_resultados.items():
                     for partido, datos in resultados.items():
-                        db.guardar_resultado_partido(
-                            categoria['id'],
-                            cuadro_num,
-                            datos['jugador1'],
-                            datos['jugador2'],
-                            datos['resultado'],
-                            datos['ganador']
-                        )
-                st.success("Resultados guardados exitosamente!")
+                        if all(k in datos for k in ['jugador1', 'jugador2', 'resultado', 'ganador']):
+                            db.guardar_resultado_partido(
+                                categoria['id'],
+                                cuadro_num,
+                                datos['jugador1'],
+                                datos['jugador2'],
+                                datos['resultado'],
+                                datos['ganador']
+                            )
+                st.success("Resultados guardados!")
                 st.rerun()
-            except Exception as e:
-                st.error(f"Error guardando resultados: {e}")
         
-        if 'llaves_clicked' in locals() and llaves_clicked:
-            st.session_state.current_page = 'vista_llaves'
-            st.rerun()
+        with col2:
+            cuadros_totales = len([c for c in cuadros.values() if len(c) >= 2])
+            if cuadros_completos == cuadros_totales and cuadros_completos > 0:
+                if st.button("🏆 Generar Llaves"):
+                    st.session_state.current_page = 'vista_llaves'
+                    st.rerun()
+            else:
+                st.write("🏆 Completa todos los cuadros primero")
     
     else:
-        # Solo mostrar botón de llaves para visualización
         if st.button("🏆 Ver Llaves"):
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
