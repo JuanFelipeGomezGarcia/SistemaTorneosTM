@@ -21,7 +21,7 @@ def vista_llaves_page():
     st.write(f"Torneo: {torneo['nombre']}")
     
     # Botón volver
-    if st.button("← Volver a Cuadros"):
+    if st.button("← Volver a Cuadros", key="volver_cuadros_main"):
         st.session_state.current_page = 'vista_cuadros'
         st.rerun()
     
@@ -52,7 +52,7 @@ def vista_llaves_page():
     
     if not cuadros_necesarios.issubset(cuadros_con_resultados):
         st.warning("⚠️ No todos los cuadros tienen resultados completos. Completa todos los partidos antes de generar las llaves.")
-        if st.button("← Volver a Cuadros"):
+        if st.button("← Volver a Cuadros", key="volver_cuadros_warning"):
             st.session_state.current_page = 'vista_cuadros'
             st.rerun()
         return
