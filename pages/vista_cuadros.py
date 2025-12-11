@@ -147,13 +147,9 @@ def vista_cuadros_page():
                 st.rerun()
         
         with col2:
-            cuadros_totales = len([c for c in cuadros.values() if len(c) >= 2])
-            if cuadros_completos == cuadros_totales and cuadros_completos > 0:
-                if st.button("🏆 Generar Llaves"):
-                    st.session_state.current_page = 'vista_llaves'
-                    st.rerun()
-            else:
-                st.write("🏆 Completa todos los cuadros primero")
+            if st.button("🏆 Ir a Llaves"):
+                st.session_state.current_page = 'vista_llaves'
+                st.rerun()
     
     else:
         if st.button("🏆 Ver Llaves"):

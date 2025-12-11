@@ -27,16 +27,35 @@ def vista_llaves_page():
     
     st.markdown("---")
     
+    # Validar que todos los cuadros estén completos
+    participantes_data = db.obtener_participantes(categoria['id'])
+    participantes = [p['nombre'] for p in participantes_data]
+    
+    from utils.tournament_utils import generar_cuadros
+    cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
+    
     # Obtener ganadores de cuadros
     partidos = db.obtener_partidos(categoria['id'])
     ganadores_por_cuadro = {}
+    cuadros_con_resultados = set()
     
     for partido in partidos:
         cuadro = partido['cuadro_numero']
         if partido['ganador']:
+            cuadros_con_resultados.add(cuadro)
             if cuadro not in ganadores_por_cuadro:
                 ganadores_por_cuadro[cuadro] = []
             ganadores_por_cuadro[cuadro].append(partido['ganador'])
+    
+    # Verificar si todos los cuadros tienen resultados
+    cuadros_necesarios = set(c for c in cuadros.keys() if len(cuadros[c]) >= 2)
+    
+    if not cuadros_necesarios.issubset(cuadros_con_resultados):
+        st.warning("⚠️ No todos los cuadros tienen resultados completos. Completa todos los partidos antes de generar las llaves.")
+        if st.button("← Volver a Cuadros"):
+            st.session_state.current_page = 'vista_cuadros'
+            st.rerun()
+        return
     
     # Obtener ganadores únicos por cuadro (los que más partidos ganaron)
     ganadores_cuadros = []
