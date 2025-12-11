@@ -60,7 +60,7 @@ def login_page():
                         st.error("Usuario o contraseña incorrectos")
         
         else:  # Competidor
-            if st.button("Continuar como Competidor", type="primary"):
+            if st.button("Continuar como Competidor"):
                 st.session_state.user_type = "competitor"
                 st.session_state.authenticated = True
                 st.session_state.current_page = 'home'
@@ -87,7 +87,7 @@ def home_page():
     
     # Botón crear torneo (solo admin)
     if st.session_state.user_type == "admin":
-        if st.button("➕ Crear Nuevo Torneo", type="primary"):
+        if st.button("➕ Crear Nuevo Torneo"):
             st.session_state.current_page = 'crear_torneo'
             st.rerun()
         st.markdown("---")
@@ -178,7 +178,7 @@ def editar_torneo_page():
     categorias = db.obtener_categorias(torneo['id'])
     
     # Botón para agregar nueva categoría
-    if st.button("➕ Agregar Nueva Categoría", type="primary"):
+    if st.button("➕ Agregar Nueva Categoría"):
         st.session_state.current_page = 'crear_categoria'
         st.rerun()
     
@@ -210,7 +210,7 @@ def editar_torneo_page():
             st.markdown("---")
         
         # Botón para finalizar creación del torneo
-        if st.button("✅ Finalizar Creación del Torneo", type="success"):
+        if st.button("✅ Finalizar Creación del Torneo"):
             st.session_state.current_page = 'home'
             st.success("Torneo creado exitosamente!")
             st.rerun()
@@ -344,7 +344,7 @@ def vista_categorias_page():
         todas_completas = all(cat.get('ganador') for cat in categorias)
         
         if todas_completas:
-            if st.button("🏆 Terminar Torneo", type="success"):
+            if st.button("🏆 Terminar Torneo"):
                 if db.actualizar_estado_torneo(torneo['id'], 'finalizado'):
                     st.success("¡Torneo finalizado exitosamente!")
                     st.session_state.selected_tournament['estado'] = 'finalizado'
