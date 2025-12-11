@@ -131,7 +131,7 @@ def vista_cuadros_page():
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("💾 Guardar Resultados", type="primary"):
+            if st.button("💾 Guardar Resultados"):
                 # Guardar todos los resultados
                 for cuadro_num, resultados in todos_resultados.items():
                     for partido, datos in resultados.items():
@@ -150,7 +150,7 @@ def vista_cuadros_page():
         with col2:
             # Habilitar botón de llaves solo si todos los cuadros están completos
             if cuadros_completos == len([c for c in cuadros.values() if len(c) >= 2]):
-                if st.button("🏆 Generar Llaves", type="success"):
+                if st.button("🏆 Generar Llaves"):
                     st.session_state.current_page = 'vista_llaves'
                     st.rerun()
             else:

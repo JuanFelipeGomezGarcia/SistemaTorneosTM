@@ -223,7 +223,7 @@ def vista_llaves_page():
     
     # Botón guardar
     if puede_editar:
-        if st.button("💾 Guardar Llaves", type="primary"):
+        if st.button("💾 Guardar Llaves"):
             # Actualizar las llaves en session_state
             st.session_state[f'llaves_{categoria["id"]}'] = llaves
             st.success("Llaves guardadas exitosamente!")
