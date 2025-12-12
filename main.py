@@ -281,8 +281,8 @@ def crear_categoria_page():
         personas_que_pasan = st.number_input(
             "🏆 Personas que pasan a Llaves", 
             min_value=1, 
-            max_value=max(1, personas_por_cuadro-1), 
-            value=min(personas_pasan_default, max(1, personas_por_cuadro-1)),
+            max_value=personas_por_cuadro, 
+            value=min(personas_pasan_default, personas_por_cuadro),
             help="Cuántos participantes de cada cuadro avanzan a la fase eliminatoria",
             key="personas_pasan"
         )
@@ -318,8 +318,8 @@ def crear_categoria_page():
         # Validaciones EN TIEMPO REAL
         if total_participantes < personas_por_cuadro:
             st.warning(f"⚠️ Necesitas al menos {personas_por_cuadro} participantes para formar un cuadro")
-        elif personas_que_pasan >= personas_por_cuadro:
-            st.error(f"❌ Las personas que pasan ({personas_que_pasan}) deben ser menores que las personas por cuadro ({personas_por_cuadro})")
+        elif personas_que_pasan > personas_por_cuadro:
+            st.error(f"❌ Las personas que pasan ({personas_que_pasan}) no pueden ser mayores que las personas por cuadro ({personas_por_cuadro})")
         else:
             st.success(f"✅ Configuración válida: {cuadros_necesarios} cuadro(s) con {personas_por_cuadro} personas cada uno")
     
@@ -343,8 +343,8 @@ def crear_categoria_page():
                 st.error(f"❌ Necesitas al menos {personas_por_cuadro_final} participantes")
                 return
             
-            if personas_que_pasan_final >= personas_por_cuadro_final:
-                st.error(f"❌ Las personas que pasan no pueden ser igual o mayor a las personas por cuadro")
+            if personas_que_pasan_final > personas_por_cuadro_final:
+                st.error(f"❌ Las personas que pasan no pueden ser mayor a las personas por cuadro")
                 return
             
             # Calcular cantidad de cuadros automáticamente

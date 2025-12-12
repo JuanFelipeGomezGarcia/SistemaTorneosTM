@@ -203,34 +203,49 @@ def vista_cuadros_page():
                 
                 # Celda editable o de solo lectura
                 if puede_editar:
-                    # Selectbox dentro de la celda
-                    opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
-                    index_actual = opciones.index(resultado_guardado) if resultado_guardado in opciones else 0
-                    
                     key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
                     
                     with cols[j+1]:
-                        nuevo_resultado = st.selectbox(
+                        nuevo_resultado = st.text_input(
                             "",
-                            opciones,
-                            index=index_actual,
+                            value=resultado_guardado,
                             key=key,
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
+                            placeholder="#-#",
+                            help="Formato: número-número (ej: 3-1)"
                         )
                         
-                        # Guardar si cambió
-                        if nuevo_resultado and nuevo_resultado != resultado_guardado:
-                            ganador = jugador_fila if nuevo_resultado in ["3-0", "3-1", "3-2"] else jugador_col
-                            
-                            db.guardar_resultado_partido(
-                                categoria['id'],
-                                cuadro_num,
-                                jugador_fila,
-                                jugador_col,
-                                nuevo_resultado,
-                                ganador
-                            )
-                            st.rerun()
+                        # Validar formato y guardar si cambió
+                        if nuevo_resultado != resultado_guardado:
+                            if nuevo_resultado == "":
+                                # Permitir borrar resultado
+                                if resultado_guardado:  # Solo si había un resultado previo
+                                    db.guardar_resultado_partido(
+                                        categoria['id'],
+                                        cuadro_num,
+                                        jugador_fila,
+                                        jugador_col,
+                                        "",
+                                        ""
+                                    )
+                                    st.rerun()
+                            elif "-" in nuevo_resultado:
+                                # Validar formato #-#
+                                partes = nuevo_resultado.split("-")
+                                if len(partes) == 2 and partes[0].isdigit() and partes[1].isdigit():
+                                    num1, num2 = int(partes[0]), int(partes[1])
+                                    # Determinar ganador
+                                    ganador = jugador_fila if num1 > num2 else jugador_col
+                                    
+                                    db.guardar_resultado_partido(
+                                        categoria['id'],
+                                        cuadro_num,
+                                        jugador_fila,
+                                        jugador_col,
+                                        nuevo_resultado,
+                                        ganador
+                                    )
+                                    st.rerun()
                 
                 else:
                     # Solo mostrar resultado
