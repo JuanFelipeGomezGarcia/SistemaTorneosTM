@@ -206,9 +206,17 @@ def vista_cuadros_page():
                     key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
                     
                     with cols[j+1]:
+                        # Verificar si este campo debe limpiarse por error
+                        clear_key = f"clear_{key}"
+                        if st.session_state.get(clear_key, False):
+                            valor_mostrar = ""
+                            st.session_state[clear_key] = False  # Reset flag
+                        else:
+                            valor_mostrar = resultado_guardado
+                            
                         nuevo_resultado = st.text_input(
                             "",
-                            value=resultado_guardado,
+                            value=valor_mostrar,
                             key=key,
                             label_visibility="collapsed",
                             placeholder="#-#",
@@ -248,11 +256,15 @@ def vista_cuadros_page():
                                     )
                                     st.rerun()
                                 else:
-                                    # Formato inválido - mostrar toast
+                                    # Formato inválido - marcar para limpiar y mostrar toast
+                                    st.session_state[f"clear_{key}"] = True
                                     st.toast("⚠️ Formato inválido. Use: número-número", icon="⚠️")
+                                    st.rerun()
                             else:
                                 # No contiene guión - formato inválido
+                                st.session_state[f"clear_{key}"] = True
                                 st.toast("⚠️ Formato inválido. Use: número-número (ej: 3-1)", icon="⚠️")
+                                st.rerun()
                 
                 else:
                     # Solo mostrar resultado
