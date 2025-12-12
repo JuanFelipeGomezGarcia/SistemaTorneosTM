@@ -283,6 +283,12 @@ def crear_categoria_page():
         participantes_actuales = [p.strip() for p in participantes_text.split('\n') if p.strip()]
         total_participantes = len(participantes_actuales)
         
+        # Mostrar contador justo debajo del textarea
+        if total_participantes > 0:
+            st.markdown(f"**👥 Participantes ingresados: {total_participantes}**")
+        else:
+            st.markdown("**👥 Participantes ingresados: 0**")
+        
         # Cálculos automáticos
         if total_participantes > 0:
             cuadros_necesarios = (total_participantes + personas_por_cuadro - 1) // personas_por_cuadro
