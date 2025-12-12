@@ -248,11 +248,11 @@ def vista_cuadros_page():
                                     )
                                     st.rerun()
                                 else:
-                                    # Formato inválido - mostrar warning
-                                    cols[j+1].error("⚠️ Formato inválido")
+                                    # Formato inválido - mostrar toast
+                                    st.toast("⚠️ Formato inválido. Use: número-número", icon="⚠️")
                             else:
                                 # No contiene guión - formato inválido
-                                cols[j+1].error("⚠️ Use formato: #-#")
+                                st.toast("⚠️ Formato inválido. Use: número-número (ej: 3-1)", icon="⚠️")
                 
                 else:
                     # Solo mostrar resultado
