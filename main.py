@@ -239,6 +239,26 @@ def crear_categoria_page():
         participantes_data = db.obtener_participantes(categoria['id'])
         participantes_existentes = [p['nombre'] for p in participantes_data]
     
+    # Campo de participantes FUERA del formulario para actualización en tiempo real
+    st.subheader("👥 Participantes")
+    
+    participantes_text = st.text_area(
+        "Lista de Participantes (uno por línea)",
+        value="\n".join(participantes_existentes),
+        height=200,
+        help="Escribe el nombre de cada participante en una línea separada",
+        key="participantes_input"
+    )
+    
+    # Contador en tiempo real
+    participantes_actuales = [p.strip() for p in participantes_text.split('\n') if p.strip()]
+    total_participantes = len(participantes_actuales)
+    
+    if total_participantes > 0:
+        st.markdown(f"**👥 Participantes ingresados: {total_participantes}**")
+    else:
+        st.markdown("**👥 Participantes ingresados: 0**")
+    
     # Formulario de categoría
     with st.form("categoria_form"):
         # Valores por defecto si estamos editando
@@ -268,26 +288,8 @@ def crear_categoria_page():
                 help="Cuántos participantes de cada cuadro avanzan a la fase eliminatoria"
             )
         
-        # Lista de participantes
-        st.subheader("👥 Participantes")
-        
-        # Campo para agregar participantes
-        participantes_text = st.text_area(
-            "Lista de Participantes (uno por línea)",
-            value="\n".join(participantes_existentes),
-            height=200,
-            help="Escribe el nombre de cada participante en una línea separada"
-        )
-        
-        # Contador de participantes en tiempo real
-        participantes_actuales = [p.strip() for p in participantes_text.split('\n') if p.strip()]
-        total_participantes = len(participantes_actuales)
-        
-        # Mostrar contador justo debajo del textarea
-        if total_participantes > 0:
-            st.markdown(f"**👥 Participantes ingresados: {total_participantes}**")
-        else:
-            st.markdown("**👥 Participantes ingresados: 0**")
+        # Usar los participantes del campo externo
+        # (ya no necesitamos el campo aquí porque está fuera del formulario)
         
         # Cálculos automáticos
         if total_participantes > 0:
@@ -328,7 +330,9 @@ def crear_categoria_page():
         submit = st.form_submit_button("💾 Guardar Categoría", type="primary")
         
         if submit and nombre_categoria:
-            participantes_lista = [p.strip() for p in participantes_text.split('\n') if p.strip()]
+            # Obtener participantes del campo externo
+            participantes_text_final = st.session_state.get('participantes_input', '')
+            participantes_lista = [p.strip() for p in participantes_text_final.split('\n') if p.strip()]
             
             # Validaciones antes de guardar
             if len(participantes_lista) < personas_por_cuadro:
