@@ -259,96 +259,100 @@ def crear_categoria_page():
     else:
         st.markdown("**👥 Participantes ingresados: 0**")
     
-    # Formulario de categoría
+    # Configuración FUERA del formulario para actualización en tiempo real
+    st.subheader("⚙️ Configuración de Cuadros")
+    
+    # Valores por defecto si estamos editando
+    personas_default = categoria['personas_por_cuadro'] if categoria else 4
+    personas_pasan_default = categoria.get('personas_que_pasan', 2) if categoria else 2
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        personas_por_cuadro = st.number_input(
+            "👥 Personas por Cuadro", 
+            min_value=2, 
+            max_value=8, 
+            value=personas_default,
+            help="Número de participantes en cada cuadro Round Robin",
+            key="personas_cuadro"
+        )
+    
+    with col2:
+        personas_que_pasan = st.number_input(
+            "🏆 Personas que pasan a Llaves", 
+            min_value=1, 
+            max_value=max(1, personas_por_cuadro-1), 
+            value=min(personas_pasan_default, max(1, personas_por_cuadro-1)),
+            help="Cuántos participantes de cada cuadro avanzan a la fase eliminatoria",
+            key="personas_pasan"
+        )
+    
+    # Cálculos automáticos EN TIEMPO REAL
+    if total_participantes > 0:
+        cuadros_necesarios = (total_participantes + personas_por_cuadro - 1) // personas_por_cuadro
+        participantes_en_llaves = cuadros_necesarios * personas_que_pasan
+        
+        # Información visual
+        st.markdown("### 📊 Información de la Categoría")
+        
+        col_info1, col_info2, col_info3 = st.columns(3)
+        
+        with col_info1:
+            st.metric(
+                label="👥 Total Participantes",
+                value=total_participantes
+            )
+        
+        with col_info2:
+            st.metric(
+                label="🟦 Cuadros Necesarios",
+                value=cuadros_necesarios
+            )
+        
+        with col_info3:
+            st.metric(
+                label="🏆 Pasan a Llaves",
+                value=participantes_en_llaves
+            )
+        
+        # Validaciones EN TIEMPO REAL
+        if total_participantes < personas_por_cuadro:
+            st.warning(f"⚠️ Necesitas al menos {personas_por_cuadro} participantes para formar un cuadro")
+        elif personas_que_pasan >= personas_por_cuadro:
+            st.error(f"❌ Las personas que pasan ({personas_que_pasan}) deben ser menores que las personas por cuadro ({personas_por_cuadro})")
+        else:
+            st.success(f"✅ Configuración válida: {cuadros_necesarios} cuadro(s) con {personas_por_cuadro} personas cada uno")
+    
+    # Formulario solo para nombre y guardar
     with st.form("categoria_form"):
-        # Valores por defecto si estamos editando
+        # Solo el nombre en el formulario
         nombre_default = categoria['nombre'] if categoria else ""
-        personas_default = categoria['personas_por_cuadro'] if categoria else 4
-        # Para personas que pasan, usar un campo nuevo o valor por defecto
-        personas_pasan_default = categoria.get('personas_que_pasan', 2) if categoria else 2
-        
         nombre_categoria = st.text_input("Nombre de la Categoría", value=nombre_default)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            personas_por_cuadro = st.number_input(
-                "👥 Personas por Cuadro", 
-                min_value=2, 
-                max_value=8, 
-                value=personas_default,
-                help="Número de participantes en cada cuadro Round Robin"
-            )
-        
-        with col2:
-            personas_que_pasan = st.number_input(
-                "🏆 Personas que pasan a Llaves", 
-                min_value=1, 
-                max_value=personas_por_cuadro-1, 
-                value=min(personas_pasan_default, personas_por_cuadro-1),
-                help="Cuántos participantes de cada cuadro avanzan a la fase eliminatoria"
-            )
-        
-        # Usar los participantes del campo externo
-        # (ya no necesitamos el campo aquí porque está fuera del formulario)
-        
-        # Cálculos automáticos
-        if total_participantes > 0:
-            cuadros_necesarios = (total_participantes + personas_por_cuadro - 1) // personas_por_cuadro
-            participantes_en_llaves = cuadros_necesarios * personas_que_pasan
-            
-            # Información visual
-            st.markdown("### 📊 Información de la Categoría")
-            
-            col_info1, col_info2, col_info3 = st.columns(3)
-            
-            with col_info1:
-                st.metric(
-                    label="👥 Total Participantes",
-                    value=total_participantes
-                )
-            
-            with col_info2:
-                st.metric(
-                    label="🟦 Cuadros Necesarios",
-                    value=cuadros_necesarios
-                )
-            
-            with col_info3:
-                st.metric(
-                    label="🏆 Pasan a Llaves",
-                    value=participantes_en_llaves
-                )
-            
-            # Validaciones
-            if total_participantes < personas_por_cuadro:
-                st.warning(f"⚠️ Necesitas al menos {personas_por_cuadro} participantes para formar un cuadro")
-            elif personas_que_pasan >= personas_por_cuadro:
-                st.error(f"❌ Las personas que pasan ({personas_que_pasan}) deben ser menores que las personas por cuadro ({personas_por_cuadro})")
-            else:
-                st.success(f"✅ Configuración válida: {cuadros_necesarios} cuadro(s) con {personas_por_cuadro} personas cada uno")
         
         submit = st.form_submit_button("💾 Guardar Categoría", type="primary")
         
         if submit and nombre_categoria:
-            # Obtener participantes del campo externo
+            # Obtener valores de los campos externos
             participantes_text_final = st.session_state.get('participantes_input', '')
             participantes_lista = [p.strip() for p in participantes_text_final.split('\n') if p.strip()]
+            personas_por_cuadro_final = st.session_state.get('personas_cuadro', 4)
+            personas_que_pasan_final = st.session_state.get('personas_pasan', 2)
             
             # Validaciones antes de guardar
-            if len(participantes_lista) < personas_por_cuadro:
-                st.error(f"❌ Necesitas al menos {personas_por_cuadro} participantes")
+            if len(participantes_lista) < personas_por_cuadro_final:
+                st.error(f"❌ Necesitas al menos {personas_por_cuadro_final} participantes")
                 return
             
-            if personas_que_pasan >= personas_por_cuadro:
+            if personas_que_pasan_final >= personas_por_cuadro_final:
                 st.error(f"❌ Las personas que pasan no pueden ser igual o mayor a las personas por cuadro")
                 return
             
             # Calcular cantidad de cuadros automáticamente
-            cantidad_cuadros = (len(participantes_lista) + personas_por_cuadro - 1) // personas_por_cuadro
+            cantidad_cuadros = (len(participantes_lista) + personas_por_cuadro_final - 1) // personas_por_cuadro_final
             
             if categoria:
                 # Actualizar categoría existente
-                if db.actualizar_categoria(categoria['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro):
+                if db.actualizar_categoria(categoria['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro_final):
                     # Actualizar participantes (simplificado - eliminar y recrear)
                     # En una implementación completa, sería mejor hacer un merge
                     st.success("✅ Categoría actualizada exitosamente!")
@@ -356,7 +360,7 @@ def crear_categoria_page():
                     st.error("❌ Error al actualizar la categoría")
             else:
                 # Crear nueva categoría
-                categoria_id = db.crear_categoria(torneo['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro)
+                categoria_id = db.crear_categoria(torneo['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro_final)
                 if categoria_id:
                     # Agregar participantes
                     for participante in participantes_lista:
