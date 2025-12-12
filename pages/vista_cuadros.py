@@ -212,7 +212,8 @@ def vista_cuadros_page():
                             key=key,
                             label_visibility="collapsed",
                             placeholder="#-#",
-                            help="Formato: número-número (ej: 3-1)"
+                            help="Formato: número-número (ej: 3-1)",
+                            max_chars=10
                         )
                         
                         # Validar formato y guardar si cambió
@@ -246,6 +247,16 @@ def vista_cuadros_page():
                                         ganador
                                     )
                                     st.rerun()
+                                else:
+                                    # Formato inválido - borrar y mostrar warning
+                                    st.session_state[key] = resultado_guardado
+                                    st.toast("⚠️ Formato inválido. Use: número-número", icon="⚠️")
+                                    st.rerun()
+                            else:
+                                # No contiene guión - formato inválido
+                                st.session_state[key] = resultado_guardado
+                                st.toast("⚠️ Formato inválido. Use: número-número (ej: 3-1)", icon="⚠️")
+                                st.rerun()
                 
                 else:
                     # Solo mostrar resultado
