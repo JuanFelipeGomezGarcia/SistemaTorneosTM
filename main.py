@@ -45,6 +45,16 @@ def login_page():
         if user_type == "Administrador":
             st.subheader("Iniciar Sesión - Administrador")
             
+            # Botón de acceso directo sin credenciales
+            if st.button("🔓 Acceso Directo (Sin Login)", type="primary"):
+                st.session_state.user_type = "admin"
+                st.session_state.authenticated = True
+                st.session_state.current_page = 'home'
+                st.rerun()
+            
+            st.markdown("---")
+            st.markdown("**O usa credenciales:**")
+            
             with st.form("admin_login"):
                 usuario = st.text_input("Usuario")
                 password = st.text_input("Contraseña", type="password")
