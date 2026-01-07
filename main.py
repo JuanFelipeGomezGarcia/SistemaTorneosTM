@@ -46,16 +46,6 @@ def login_page():
         if user_type == "Administrador":
             st.subheader("Iniciar Sesión - Administrador")
             
-            # Botón de acceso directo sin credenciales
-            if st.button("🔓 Acceso Directo (Sin Login)", type="primary"):
-                st.session_state.user_type = "admin"
-                st.session_state.authenticated = True
-                st.session_state.current_page = 'home'
-                st.rerun()
-            
-            st.markdown("---")
-            st.markdown("**O usa credenciales:**")
-            
             with st.form("admin_login"):
                 usuario = st.text_input("Usuario")
                 password = st.text_input("Contraseña", type="password")
@@ -81,18 +71,16 @@ def home_page():
     """Página principal con lista de torneos"""
     st.title("🏓 Torneos de Tenis de Mesa")
     
-    # Botón de logout
+    # Usuario y botón de logout en la esquina superior derecha
     col1, col2 = st.columns([6, 1])
     with col2:
-        if st.button("Cerrar Sesión"):
+        user_icon = "👨‍💼" if st.session_state.user_type == "admin" else "🏓"
+        user_text = "Administrador" if st.session_state.user_type == "admin" else "Competidor"
+        st.markdown(f"**{user_icon} {user_text}**")
+        if st.button("Cerrar Sesión", type="secondary"):
             for key in st.session_state.keys():
                 del st.session_state[key]
             st.rerun()
-    
-    # Mostrar tipo de usuario
-    user_icon = "👨‍💼" if st.session_state.user_type == "admin" else "🏓"
-    user_text = "Administrador" if st.session_state.user_type == "admin" else "Competidor"
-    st.markdown(f"{user_icon} **Usuario:** {user_text}")
     
     st.markdown("---")
     
