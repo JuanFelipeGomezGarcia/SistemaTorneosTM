@@ -19,52 +19,9 @@ def generar_cuadros(participantes: List[str], cantidad_cuadros: int, personas_po
     return cuadros
 
 def mostrar_cuadro(cuadro_num: int, participantes: List[str], es_admin: bool = True):
-    """Muestra un cuadro con sus participantes y permite editar resultados"""
-    st.subheader(f"Cuadro {cuadro_num}")
-    
-    if len(participantes) < 2:
-        st.warning(f"Cuadro {cuadro_num} necesita al menos 2 participantes")
-        return None
-    
-    # Crear tabla de enfrentamientos
-    enfrentamientos = []
-    for i in range(0, len(participantes), 2):
-        if i + 1 < len(participantes):
-            enfrentamientos.append((participantes[i], participantes[i + 1]))
-    
-    resultados = {}
-    
-    for idx, (jugador1, jugador2) in enumerate(enfrentamientos):
-        col1, col2, col3 = st.columns([2, 1, 2])
-        
-        with col1:
-            st.write(jugador1)
-        
-        with col2:
-            if es_admin:
-                resultado_key = f"resultado_{cuadro_num}_{idx}"
-                resultado = st.selectbox(
-                    "Resultado",
-                    ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
-                    key=resultado_key
-                )
-                if resultado:
-                    if resultado in ["3-0", "3-1", "3-2"]:
-                        ganador = jugador1
-                    else:
-                        ganador = jugador2
-                    resultados[f"{jugador1}_vs_{jugador2}"] = {
-                        'resultado': resultado,
-                        'ganador': ganador
-                    }
-            else:
-                # Mostrar resultado guardado (implementar después)
-                st.write("vs")
-        
-        with col3:
-            st.write(jugador2)
-    
-    return resultados
+    """Redirecciona a vista_cuadros.py - función mantenida por compatibilidad"""
+    from pages.vista_cuadros import vista_cuadros_page
+    return vista_cuadros_page()
 
 def generar_llaves(ganadores_cuadros: List[str]):
     """Genera la estructura de llaves eliminatorias"""
