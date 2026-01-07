@@ -9,8 +9,20 @@ from datetime import datetime
 st.set_page_config(
     page_title="Sistema de Torneos - Tenis de Mesa",
     page_icon="🏓",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
+
+# Ocultar sidebar completamente
+st.markdown("""
+<style>
+    .css-1d391kg {display: none;}
+    .css-1rs6os {display: none;}
+    .css-17eq0hr {display: none;}
+    [data-testid="stSidebar"] {display: none;}
+    [data-testid="collapsedControl"] {display: none;}
+</style>
+""", unsafe_allow_html=True)
 
 # Inicializar base de datos
 db = DatabaseOperations()
