@@ -206,21 +206,19 @@ def vista_cuadros_page():
                     key = f"rr_{cuadro_num}{i}{j}{jugador_fila}{jugador_col}"
                     
                     with cols[j+1]:
-                        nuevo_resultado = st.text_input(
+                        nuevo_resultado = st.selectbox(
                             "",
-                            value=resultado_guardado,
+                            ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
+                            index=0 if not resultado_guardado else ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"].index(resultado_guardado) if resultado_guardado in ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"] else 0,
                             key=key,
-                            label_visibility="collapsed",
-                            placeholder="#-#",
-                            help="Formato: número-número (ej: 3-1)",
-                            max_chars=10
+                            label_visibility="collapsed"
                         )
                         
-                        # Validar formato y guardar si cambió
+                        # Guardar si cambió
                         if nuevo_resultado != resultado_guardado:
                             if nuevo_resultado == "":
-                                # Permitir borrar resultado
-                                if resultado_guardado:  # Solo si había un resultado previo
+                                # Borrar resultado
+                                if resultado_guardado:
                                     db.guardar_resultado_partido(
                                         categoria['id'],
                                         cuadro_num,
@@ -230,29 +228,21 @@ def vista_cuadros_page():
                                         ""
                                     )
                                     st.rerun()
-                            elif "-" in nuevo_resultado:
-                                # Validar formato #-#
-                                partes = nuevo_resultado.split("-")
-                                if len(partes) == 2 and partes[0].isdigit() and partes[1].isdigit():
-                                    num1, num2 = int(partes[0]), int(partes[1])
-                                    # Determinar ganador
-                                    ganador = jugador_fila if num1 > num2 else jugador_col
-                                    
-                                    db.guardar_resultado_partido(
-                                        categoria['id'],
-                                        cuadro_num,
-                                        jugador_fila,
-                                        jugador_col,
-                                        nuevo_resultado,
-                                        ganador
-                                    )
-                                    st.rerun()
-                                else:
-                                    # Formato inválido - solo mostrar toast
-                                    st.toast("⚠️ Formato inválido. Use: número-número", icon="⚠️")
                             else:
-                                # No contiene guión - formato inválido
-                                st.toast("⚠️ Formato inválido. Use: número-número (ej: 3-1)", icon="⚠️")
+                                # Determinar ganador
+                                partes = nuevo_resultado.split("-")
+                                num1, num2 = int(partes[0]), int(partes[1])
+                                ganador = jugador_fila if num1 > num2 else jugador_col
+                                
+                                db.guardar_resultado_partido(
+                                    categoria['id'],
+                                    cuadro_num,
+                                    jugador_fila,
+                                    jugador_col,
+                                    nuevo_resultado,
+                                    ganador
+                                )
+                                st.rerun()
                 
                 else:
                     # Solo mostrar resultado
