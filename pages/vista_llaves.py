@@ -6,8 +6,22 @@ from collections import Counter
 def vista_llaves_page():
     """Página para mostrar las llaves eliminatorias tipo bracket"""
     
+    # Validar que hay categoría seleccionada
     if 'selected_category' not in st.session_state or not st.session_state.selected_category:
-        st.error("No hay categoría seleccionada")
+        st.error("❌ No hay categoría seleccionada")
+        st.info("📝 Para ver las llaves, primero selecciona un torneo y luego una categoría desde los cuadros.")
+        
+        if st.button("← Volver al Home"):
+            st.session_state.current_page = 'home'
+            st.rerun()
+        return
+    
+    # Validar que hay torneo seleccionado
+    if 'selected_tournament' not in st.session_state or not st.session_state.selected_tournament:
+        st.error("❌ No hay torneo seleccionado")
+        if st.button("← Volver al Home"):
+            st.session_state.current_page = 'home'
+            st.rerun()
         return
     
     categoria = st.session_state.selected_category
@@ -30,11 +44,19 @@ def vista_llaves_page():
     participantes_data = db.obtener_participantes(categoria['id'])
     participantes = [p['nombre'] for p in participantes_data]
     
+    if len(participantes) < 2:
+        st.warning("⚠️ Esta categoría necesita al menos 2 participantes.")
+        return
+    
     from utils.tournament_utils import generar_cuadros
     cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
     
     # Obtener todos los partidos
     partidos = db.obtener_partidos(categoria['id'])
+    
+    if not partidos:
+        st.warning("⚠️ No hay resultados en los cuadros. Completa algunos partidos primero.")
+        return
     
     # Calcular los 2 primeros de cada cuadro
     clasificados = []
@@ -45,26 +67,30 @@ def vista_llaves_page():
             continue
             
         # Contar victorias por jugador en este cuadro
-        victorias = Counter()
+        victorias = {}
+        for participante in participantes_cuadro:
+            victorias[participante] = 0
         
         for partido in partidos:
             if partido['cuadro_numero'] == cuadro_num and partido['ganador']:
-                victorias[partido['ganador']] += 1
+                if partido['ganador'] in victorias:
+                    victorias[partido['ganador']] += 1
         
         # Ordenar por victorias (descendente)
-        jugadores_ordenados = sorted(participantes_cuadro, key=lambda x: victorias[x], reverse=True)
+        jugadores_ordenados = sorted(participantes_cuadro, key=lambda x: victorias.get(x, 0), reverse=True)
         
         # Tomar los 2 primeros
-        primero = jugadores_ordenados[0] if len(jugadores_ordenados) > 0 else None
-        segundo = jugadores_ordenados[1] if len(jugadores_ordenados) > 1 else None
-        
-        if primero:
+        if len(jugadores_ordenados) >= 1:
+            primero = jugadores_ordenados[0]
             clasificados.append(f"{primero} (C{cuadro_num}-1°)")
-        if segundo:
+        
+        if len(jugadores_ordenados) >= 2:
+            segundo = jugadores_ordenados[1]
             clasificados.append(f"{segundo} (C{cuadro_num}-2°)")
     
     if len(clasificados) < 2:
-        st.warning("⚠️ Completa los cuadros para generar las llaves. Se necesitan al menos 2 clasificados.")
+        st.warning("⚠️ Se necesitan al menos 2 clasificados para generar las llaves.")
+        st.info("📝 Completa más partidos en los cuadros para generar clasificados.")
         return
     
     # CSS para el bracket
