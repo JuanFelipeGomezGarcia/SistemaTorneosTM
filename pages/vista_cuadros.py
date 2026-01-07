@@ -3,9 +3,7 @@ from database.db_operations import DatabaseOperations
 from utils.tournament_utils import generar_cuadros
 
 def vista_cuadros_page():
-    """Nueva vista de cuadros con selectbox"""
-    
-    st.success("✅ NUEVA VISTA DE CUADROS CARGADA")
+    """Vista de cuadros con selectbox para resultados"""
     
     # Validaciones
     if 'selected_category' not in st.session_state or not st.session_state.selected_category:
@@ -24,8 +22,11 @@ def vista_cuadros_page():
     st.title(f"🎯 {categoria['nombre']}")
     st.write(f"Torneo: {torneo['nombre']}")
     
-    # Debug
-    st.info(f"🔧 Admin: {es_admin} | Estado: {torneo['estado']} | Puede editar: {puede_editar}")
+    # Info de permisos
+    if es_admin:
+        estado_text = "En Curso" if torneo['estado'] == 'en_curso' else "Finalizado"
+        permiso_text = "Edición habilitada" if puede_editar else "Solo lectura"
+        st.info(f"🔧 Estado: {estado_text} | {permiso_text}")
     
     # Botón volver
     if st.button("← Volver a Categorías"):
@@ -81,7 +82,7 @@ def vista_cuadros_page():
                     if puede_editar:
                         key = f"resultado_{cuadro_num}_{i}_{j}"
                         nuevo_resultado = st.selectbox(
-                            "",
+                            "Resultado",
                             ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
                             index=0 if not resultado_guardado else ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"].index(resultado_guardado) if resultado_guardado in ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"] else 0,
                             key=key,
@@ -95,16 +96,19 @@ def vista_cuadros_page():
                                     db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador1, jugador2, "", "")
                                     st.rerun()
                             else:
-                                partes = nuevo_resultado.split("-")
-                                num1, num2 = int(partes[0]), int(partes[1])
-                                ganador = jugador1 if num1 > num2 else jugador2
-                                db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador1, jugador2, nuevo_resultado, ganador)
-                                st.rerun()
+                                try:
+                                    partes = nuevo_resultado.split("-")
+                                    num1, num2 = int(partes[0]), int(partes[1])
+                                    ganador = jugador1 if num1 > num2 else jugador2
+                                    db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador1, jugador2, nuevo_resultado, ganador)
+                                    st.rerun()
+                                except (ValueError, IndexError):
+                                    st.error("Formato de resultado inválido")
                     else:
                         if resultado_guardado:
-                            st.write(f"**{resultado_guardado}**")
+                            st.markdown(f"**{resultado_guardado}**")
                         else:
-                            st.write("vs")
+                            st.markdown("*vs*")
                 
                 with col3:
                     st.write(f"**{jugador2}**")
@@ -112,13 +116,15 @@ def vista_cuadros_page():
         st.markdown("---")
     
     # Botones finales
+    st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🔄 Actualizar", use_container_width=True):
             st.rerun()
     
     with col2:
-        if st.button("🏆 Ir a Llaves", type="primary", use_container_width=True):
+        boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
+        if st.button(boton_text, type="primary", use_container_width=True):
             st.session_state.current_page = 'vista_llaves'
             st.rerun()
 
