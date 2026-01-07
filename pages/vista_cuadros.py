@@ -5,6 +5,12 @@ from utils.tournament_utils import generar_cuadros
 def vista_cuadros_page():
     """Página para mostrar y editar los cuadros de una categoría"""
     
+    # Forzar recarga de la página
+    st.markdown("<!-- VISTA_CUADROS_ROBUSTA -->")
+    
+    # DEBUG: Verificar que estamos en la vista correcta
+    st.success("🔧 VISTA CUADROS ROBUSTA CARGADA")
+    
     # CSS personalizado para mejorar el diseño
     st.markdown("""
     <style>
