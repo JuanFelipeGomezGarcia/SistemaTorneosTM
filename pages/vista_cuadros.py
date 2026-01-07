@@ -120,10 +120,6 @@ def vista_cuadros_page():
         permiso_color = "#27ae60" if puede_editar else "#f39c12"
         st.markdown(f"<div class='info-badge' style='background: {permiso_color};'>{permiso_text}</div>", unsafe_allow_html=True)
     
-    # DEBUG: Mostrar información de permisos
-    if st.session_state.user_type == "admin":
-        st.info(f"🔧 DEBUG: Admin={es_admin}, Estado={torneo['estado']}, Puede editar={puede_editar}")
-    
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Botón volver elegante
