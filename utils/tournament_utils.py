@@ -19,9 +19,8 @@ def generar_cuadros(participantes: List[str], cantidad_cuadros: int, personas_po
     return cuadros
 
 def mostrar_cuadro(cuadro_num: int, participantes: List[str], es_admin: bool = True):
-    """Redirecciona a vista_cuadros.py - función mantenida por compatibilidad"""
-    from pages.vista_cuadros import vista_cuadros_page
-    return vista_cuadros_page()
+    """Función eliminada - usar nueva vista_cuadros.py"""
+    pass
 
 def generar_llaves(ganadores_cuadros: List[str]):
     """Genera la estructura de llaves eliminatorias"""
