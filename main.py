@@ -1,6 +1,6 @@
 import streamlit as st
-# from database.db_operations import DatabaseOperations
-from database.db_local import LocalDatabaseOperations
+from database.db_operations import DatabaseOperations
+# from database.db_local import LocalDatabaseOperations
 from pages.vista_cuadros import vista_cuadros_page
 from pages.vista_llaves import vista_llaves_page
 from datetime import datetime
@@ -12,8 +12,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# Inicializar base de datos local
-db = LocalDatabaseOperations()
+# Inicializar base de datos
+db = DatabaseOperations()
 
 # Inicializar session state
 if 'user_type' not in st.session_state:

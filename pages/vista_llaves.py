@@ -1,6 +1,6 @@
 import streamlit as st
-# from database.db_operations import DatabaseOperations
-from database.db_local import LocalDatabaseOperations
+from database.db_operations import DatabaseOperations
+# from database.db_local import LocalDatabaseOperations
 import math
 
 def vista_llaves_page():
@@ -12,7 +12,7 @@ def vista_llaves_page():
     
     categoria = st.session_state.selected_category
     torneo = st.session_state.selected_tournament
-    db = LocalDatabaseOperations()
+    db = DatabaseOperations()
     
     es_admin = st.session_state.user_type == "admin"
     puede_editar = es_admin and torneo['estado'] == 'en_curso'
