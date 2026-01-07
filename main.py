@@ -2,6 +2,7 @@ import streamlit as st
 from database.db_operations import DatabaseOperations
 # from database.db_local import LocalDatabaseOperations
 from pages.vista_cuadros import vista_cuadros_page
+from pages.vista_cuadros_simple import vista_cuadros_simple_page
 from pages.vista_llaves import vista_llaves_page
 from datetime import datetime
 
@@ -423,10 +424,17 @@ def vista_categorias_page():
                 st.write(f"Participantes: {len(participantes)}")
             
             with col4:
-                if st.button("Ver", key=f"ver_cat_{categoria['id']}"):
-                    st.session_state.selected_category = categoria
-                    st.session_state.current_page = 'vista_cuadros'
-                    st.rerun()
+                col_ver, col_simple = st.columns(2)
+                with col_ver:
+                    if st.button("Ver", key=f"ver_cat_{categoria['id']}"):
+                        st.session_state.selected_category = categoria
+                        st.session_state.current_page = 'vista_cuadros'
+                        st.rerun()
+                with col_simple:
+                    if st.button("Simple", key=f"simple_cat_{categoria['id']}"):
+                        st.session_state.selected_category = categoria
+                        st.session_state.current_page = 'vista_cuadros_simple'
+                        st.rerun()
         
         st.markdown("---")
     
@@ -463,6 +471,8 @@ def main():
         vista_categorias_page()
     elif st.session_state.current_page == 'vista_cuadros':
         vista_cuadros_page()
+    elif st.session_state.current_page == 'vista_cuadros_simple':
+        vista_cuadros_simple_page()
     elif st.session_state.current_page == 'vista_llaves':
         vista_llaves_page()
 
