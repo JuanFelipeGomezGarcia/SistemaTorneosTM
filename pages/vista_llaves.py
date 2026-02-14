@@ -210,134 +210,91 @@ def vista_llaves_page():
                 elif jugador2 and not jugador1:
                     bracket[ronda + 1][i // 2] = jugador2
     
-    # Mostrar bracket
+    # Mostrar bracket con controles integrados
     st.markdown('<div class="bracket-wrapper"><div class="bracket-container">', unsafe_allow_html=True)
     
-    # Generar HTML completo del bracket
-    bracket_html = ""
+    # Crear columnas para cada ronda
+    ronda_cols = st.columns(num_rondas)
     
     for ronda in range(1, num_rondas + 1):
-        # Título de la ronda
-        if ronda == num_rondas:
-            titulo = "🏆 FINAL"
-        elif ronda == num_rondas - 1 and num_rondas > 2:
-            titulo = "🥉 SEMIFINAL"
-        else:
-            titulo = f"Ronda {ronda}"
-        
-        # Calcular altura de cada match para espaciado
-        match_height = 100  # Altura base del match
-        spacing = match_height * (2 ** (ronda - 1))
-        
-        bracket_html += f'<div class="bracket-round">'
-        bracket_html += f'<div class="round-header">{titulo}</div>'
-        
-        participantes_ronda = bracket[ronda]
-        
-        for i in range(0, len(participantes_ronda), 2):
-            if i + 1 < len(participantes_ronda):
-                jugador1 = participantes_ronda[i]
-                jugador2 = participantes_ronda[i + 1]
-                
-                if jugador1 and jugador2:
-                    # Determinar ganador
-                    if ronda == num_rondas:
-                        campeon_key = f'campeon_{categoria["id"]}'
-                        ganador = st.session_state.get(campeon_key)
-                    else:
-                        ganador = bracket[ronda + 1][i // 2] if ronda < num_rondas else None
+        with ronda_cols[ronda - 1]:
+            # Título de la ronda
+            if ronda == num_rondas:
+                st.markdown('<div class="round-header">🏆 FINAL</div>', unsafe_allow_html=True)
+            elif ronda == num_rondas - 1 and num_rondas > 2:
+                st.markdown('<div class="round-header">🥉 SEMIFINAL</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="round-header">Ronda {ronda}</div>', unsafe_allow_html=True)
+            
+            participantes_ronda = bracket[ronda]
+            
+            # Calcular espaciado
+            match_height = 100
+            spacing = match_height * (2 ** (ronda - 1))
+            
+            for i in range(0, len(participantes_ronda), 2):
+                if i + 1 < len(participantes_ronda):
+                    jugador1 = participantes_ronda[i]
+                    jugador2 = participantes_ronda[i + 1]
                     
-                    # Clases CSS
-                    box_class = "match-box final-box" if ronda == num_rondas else "match-box"
-                    p1_class = "player-item player-winner" if ganador == jugador1 else "player-item"
-                    p2_class = "player-item player-winner" if ganador == jugador2 else "player-item"
-                    
-                    # Agregar espaciado superior para centrar
-                    if i > 0:
-                        bracket_html += f'<div style="height: {spacing}px;"></div>'
-                    elif ronda > 1:
-                        # Espaciado inicial para centrar primera match
-                        initial_spacing = spacing // 2
-                        bracket_html += f'<div style="height: {initial_spacing}px;"></div>'
-                    
-                    # Match box con ID único para interacción
-                    match_id = f"match_r{ronda}_m{i//2}"
-                    bracket_html += f'''
-                    <div class="match-wrapper" id="{match_id}">
-                        <div class="{box_class}">
-                            <div class="{p1_class}" data-player="{jugador1}" data-match="{match_id}">
-                                {"✅ " if ganador == jugador1 else ""}{jugador1}
-                            </div>
-                            <div class="vs-divider">VS</div>
-                            <div class="{p2_class}" data-player="{jugador2}" data-match="{match_id}">
-                                {"✅ " if ganador == jugador2 else ""}{jugador2}
-                            </div>
-                        </div>
-                        {"<div class='connector'></div>" if ronda < num_rondas else ""}
-                    </div>
-                    '''
-        
-        bracket_html += '</div>'
-    
-    bracket_html += '</div></div>'
-    st.markdown(bracket_html, unsafe_allow_html=True)
-    
-    # Controles interactivos con Streamlit (fuera del HTML)
-    if puede_editar:
-        st.markdown("---")
-        st.subheader("🎮 Seleccionar Ganadores")
-        
-        cols = st.columns(num_rondas)
-        
-        for ronda in range(1, num_rondas + 1):
-            with cols[ronda - 1]:
-                if ronda == num_rondas:
-                    st.markdown("**🏆 FINAL**")
-                elif ronda == num_rondas - 1 and num_rondas > 2:
-                    st.markdown("**🥉 SEMIFINAL**")
-                else:
-                    st.markdown(f"**Ronda {ronda}**")
-                
-                participantes_ronda = bracket[ronda]
-                
-                for i in range(0, len(participantes_ronda), 2):
-                    if i + 1 < len(participantes_ronda):
-                        jugador1 = participantes_ronda[i]
-                        jugador2 = participantes_ronda[i + 1]
+                    if jugador1 and jugador2:
+                        # Determinar ganador
+                        if ronda == num_rondas:
+                            campeon_key = f'campeon_{categoria["id"]}'
+                            ganador = st.session_state.get(campeon_key)
+                        else:
+                            ganador = bracket[ronda + 1][i // 2] if ronda < num_rondas else None
                         
-                        if jugador1 and jugador2:
-                            if ronda == num_rondas:
-                                campeon_key = f'campeon_{categoria["id"]}'
-                                ganador = st.session_state.get(campeon_key)
+                        # Espaciado superior
+                        if i > 0:
+                            st.markdown(f'<div style="height: {spacing}px;"></div>', unsafe_allow_html=True)
+                        elif ronda > 1:
+                            initial_spacing = spacing // 2
+                            st.markdown(f'<div style="height: {initial_spacing}px;"></div>', unsafe_allow_html=True)
+                        
+                        # Match box
+                        box_class = "match-box final-box" if ronda == num_rondas else "match-box"
+                        st.markdown(f'<div class="match-wrapper"><div class="{box_class}">', unsafe_allow_html=True)
+                        
+                        if puede_editar:
+                            # Jugador 1 - botón clickeable
+                            if ganador == jugador1:
+                                st.markdown(f'<div class="player-item player-winner">✅ {jugador1}</div>', unsafe_allow_html=True)
                             else:
-                                ganador = bracket[ronda + 1][i // 2]
+                                if st.button(jugador1, key=f"r{ronda}_m{i//2}_j1", use_container_width=True):
+                                    if ronda == num_rondas:
+                                        st.session_state[f'campeon_{categoria["id"]}'] = jugador1
+                                    else:
+                                        bracket[ronda + 1][i // 2] = jugador1
+                                    st.rerun()
                             
-                            # Botones para seleccionar ganador
-                            col_a, col_b = st.columns(2)
+                            st.markdown('<div class="vs-divider">VS</div>', unsafe_allow_html=True)
                             
-                            with col_a:
-                                if ganador != jugador1:
-                                    if st.button(f"✅ {jugador1[:15]}", key=f"btn_r{ronda}_m{i//2}_j1", use_container_width=True):
-                                        if ronda == num_rondas:
-                                            st.session_state[campeon_key] = jugador1
-                                        else:
-                                            bracket[ronda + 1][i // 2] = jugador1
-                                        st.rerun()
-                                else:
-                                    st.success(f"✅ {jugador1[:15]}")
-                            
-                            with col_b:
-                                if ganador != jugador2:
-                                    if st.button(f"✅ {jugador2[:15]}", key=f"btn_r{ronda}_m{i//2}_j2", use_container_width=True):
-                                        if ronda == num_rondas:
-                                            st.session_state[campeon_key] = jugador2
-                                        else:
-                                            bracket[ronda + 1][i // 2] = jugador2
-                                        st.rerun()
-                                else:
-                                    st.success(f"✅ {jugador2[:15]}")
-                            
-                            st.markdown("---")
+                            # Jugador 2 - botón clickeable
+                            if ganador == jugador2:
+                                st.markdown(f'<div class="player-item player-winner">✅ {jugador2}</div>', unsafe_allow_html=True)
+                            else:
+                                if st.button(jugador2, key=f"r{ronda}_m{i//2}_j2", use_container_width=True):
+                                    if ronda == num_rondas:
+                                        st.session_state[f'campeon_{categoria["id"]}'] = jugador2
+                                    else:
+                                        bracket[ronda + 1][i // 2] = jugador2
+                                    st.rerun()
+                        else:
+                            # Solo lectura
+                            p1_class = "player-item player-winner" if ganador == jugador1 else "player-item"
+                            p2_class = "player-item player-winner" if ganador == jugador2 else "player-item"
+                            st.markdown(f'''
+                                <div class="{p1_class}">{"✅ " if ganador == jugador1 else ""}{jugador1}</div>
+                                <div class="vs-divider">VS</div>
+                                <div class="{p2_class}">{"✅ " if ganador == jugador2 else ""}{jugador2}</div>
+                            ''', unsafe_allow_html=True)
+                        
+                        # Cerrar match box y agregar conector
+                        connector = '<div class="connector"></div>' if ronda < num_rondas else ''
+                        st.markdown(f'</div>{connector}</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div></div>', unsafe_allow_html=True)
     
     # Mostrar campeón final
     campeon_key = f'campeon_{categoria["id"]}'
