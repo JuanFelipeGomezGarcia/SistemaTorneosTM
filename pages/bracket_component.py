@@ -231,24 +231,19 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
             function selectWinner(round, matchIndex, player) {{
                 if (!bracketData.canEdit || player === "BYE") return;
                 
-                if (round === bracketData.numRounds) {{
-                    // Final - guardar campeón
-                    window.parent.postMessage({{
-                        type: 'champion',
-                        categoriaId: bracketData.categoriaId,
-                        champion: player
-                    }}, '*');
-                }} else {{
-                    // Avanzar a siguiente ronda
+                // Actualizar estado local
+                if (round < bracketData.numRounds) {{
                     bracketState[round + 1][matchIndex] = player;
-                    window.parent.postMessage({{
-                        type: 'winner',
-                        categoriaId: bracketData.categoriaId,
-                        round: round,
-                        matchIndex: matchIndex,
-                        winner: player
-                    }}, '*');
                 }}
+                
+                // Notificar a Streamlit
+                window.parent.postMessage({{
+                    type: round === bracketData.numRounds ? 'champion' : 'winner',
+                    categoriaId: bracketData.categoriaId,
+                    round: round,
+                    matchIndex: matchIndex,
+                    winner: player
+                }}, '*');
                 
                 renderBracket();
             }}
@@ -337,18 +332,19 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         }}
                         
                         // Líneas conectoras
-                        if (round < bracketData.numRounds && p1 && p2) {{
-                            // Línea horizontal desde el match
+                        if (round < bracketData.numRounds && p1 && p2 && p1 !== "BYE" && p2 !== "BYE") {{
+                            // Línea horizontal desde el centro del match
                             const connH = document.createElement('div');
                             connH.className = 'connector connector-h';
                             matchDiv.appendChild(connH);
                             
-                            // Línea vertical conectando matches
-                            if (i % 2 === 0) {{
+                            // Línea vertical solo en el primer match de cada par
+                            if (i % 4 === 0 && i + 2 < players.length) {{
                                 const connV = document.createElement('div');
                                 connV.className = 'connector connector-v';
-                                connV.style.top = '50%';
-                                connV.style.height = `${{spacing + matchHeight / 2}}px`;
+                                const verticalHeight = spacing + matchHeight;
+                                connV.style.top = `${{matchHeight / 2}}px`;
+                                connV.style.height = `${{verticalHeight}}px`;
                                 matchDiv.appendChild(connV);
                             }}
                         }}
