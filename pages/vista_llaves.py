@@ -169,6 +169,20 @@ def vista_llaves_page():
         with cols[i % len(cols)]:
             st.info(clasificado)
     
+    # Botón para regenerar llaves
+    if puede_editar:
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("🔄 Regenerar Llaves", help="Actualiza las llaves con los nuevos clasificados"):
+                bracket_key = f'bracket_{categoria["id"]}'
+                if bracket_key in st.session_state:
+                    del st.session_state[bracket_key]
+                campeon_key = f'campeon_{categoria["id"]}'
+                if campeon_key in st.session_state:
+                    del st.session_state[campeon_key]
+                st.success("✅ Llaves regeneradas")
+                st.rerun()
+    
     st.markdown("---")
     
     # Generar estructura de bracket
