@@ -3,107 +3,23 @@ from database.db_operations import DatabaseOperations
 import math
 
 def vista_llaves_page():
-    """Vista de llaves eliminatorias con diseño profesional"""
+    """Vista de llaves eliminatorias estilo bracket tradicional"""
     
-    # CSS para bracket horizontal tipo llave tradicional
+    # CSS para bracket con líneas conectoras
     st.markdown("""
     <style>
-    .tournament-bracket {
-        display: flex;
-        justify-content: flex-start;
-        align-items: flex-start;
-        padding: 20px;
+    .bracket-wrapper {
         background: #f8f9fa;
-        border-radius: 10px;
-        margin: 20px 0;
-        overflow-x: auto;
-        gap: 50px;
-    }
-    .bracket-round {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        min-width: 200px;
-        position: relative;
-    }
-    .round-title {
-        text-align: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 8px 15px;
+        padding: 30px;
         border-radius: 15px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        font-size: 0.9em;
+        overflow-x: auto;
     }
-    .match-container {
-        background: white;
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        margin: 15px 0;
-        position: relative;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    }
-    .match-container:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
-    }
-    .final-match {
-        border-color: #ffd700;
-        background: linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%);
-        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
-    }
-    .player-slot {
-        padding: 12px 15px;
-        border-bottom: 1px solid #dee2e6;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .player-slot:last-child {
-        border-bottom: none;
-    }
-    .player-slot:hover {
-        background: #e3f2fd;
-    }
-    .winner-slot {
-        background: #d4edda;
-        color: #155724;
-        font-weight: bold;
-    }
-    .champion-slot {
-        background: #fff3cd;
-        color: #856404;
-        font-weight: bold;
-    }
-    .connector-line {
-        position: absolute;
-        right: -25px;
-        top: 50%;
-        width: 25px;
-        height: 2px;
-        background: #6c757d;
-        transform: translateY(-1px);
-    }
-    .bracket-round:last-child .connector-line {
-        display: none;
-    }
-    .bye-slot {
-        background: #d1ecf1;
-        color: #0c5460;
+    .bracket-title {
         text-align: center;
-        padding: 20px 15px;
+        font-size: 28px;
         font-weight: bold;
-        border-radius: 8px;
-    }
-    .vs-indicator {
-        text-align: center;
-        font-size: 0.8em;
-        color: #6c757d;
-        font-weight: bold;
-        padding: 5px 0;
-        background: #f8f9fa;
+        color: #2c3e50;
+        margin-bottom: 30px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -204,131 +120,88 @@ def vista_llaves_page():
     
     bracket = st.session_state[bracket_key]
     
-    # Mostrar bracket horizontal tipo llave
-    st.subheader("🎯 Bracket Eliminatorio")
+    # Mostrar bracket estilo tradicional
+    st.markdown('<div class="bracket-wrapper">', unsafe_allow_html=True)
+    st.markdown('<div class="bracket-title">🏆 LLAVES ELIMINATORIAS</div>', unsafe_allow_html=True)
     
-    # Crear el bracket horizontal
-    st.markdown('<div class="tournament-bracket">', unsafe_allow_html=True)
+    # Crear columnas para cada ronda
+    ronda_cols = st.columns(num_rondas)
     
-    # Generar cada ronda horizontalmente
     for ronda in range(1, num_rondas + 1):
-        st.markdown('<div class="bracket-round">', unsafe_allow_html=True)
-        
-        # Título de la ronda
-        if ronda == num_rondas:
-            titulo = "🏆 FINAL"
-        elif ronda == num_rondas - 1 and num_rondas > 2:
-            titulo = "🥉 SEMIFINAL"
-        else:
-            titulo = f"Ronda {ronda}"
-        
-        st.markdown(f'<div class="round-title">{titulo}</div>', unsafe_allow_html=True)
-        
-        participantes_ronda = bracket[ronda]
-        
-        # Mostrar enfrentamientos
-        for i in range(0, len(participantes_ronda), 2):
-            if i + 1 < len(participantes_ronda):
-                jugador1 = participantes_ronda[i]
-                jugador2 = participantes_ronda[i + 1]
-                
-                if jugador1 and jugador2:
-                    # Determinar ganador y clases CSS
-                    if ronda == num_rondas:
-                        # Final
-                        campeon_key = f'campeon_{categoria["id"]}'
-                        ganador = st.session_state.get(campeon_key)
-                        match_class = 'match-container final-match'
-                    else:
-                        # Rondas anteriores
-                        ganador = bracket[ronda + 1][i // 2] if ronda < num_rondas else None
-                        match_class = 'match-container'
+        with ronda_cols[ronda - 1]:
+            # Título de la ronda
+            if ronda == num_rondas:
+                st.markdown("### 🏆 FINAL")
+            elif ronda == num_rondas - 1 and num_rondas > 2:
+                st.markdown("### 🥉 SEMIFINAL")
+            else:
+                st.markdown(f"### Ronda {ronda}")
+            
+            participantes_ronda = bracket[ronda]
+            
+            # Mostrar enfrentamientos
+            for i in range(0, len(participantes_ronda), 2):
+                if i + 1 < len(participantes_ronda):
+                    jugador1 = participantes_ronda[i]
+                    jugador2 = participantes_ronda[i + 1]
                     
-                    # Clases para jugadores
-                    if ronda == num_rondas:
-                        j1_class = 'player-slot champion-slot' if ganador == jugador1 else 'player-slot'
-                        j2_class = 'player-slot champion-slot' if ganador == jugador2 else 'player-slot'
-                    else:
-                        j1_class = 'player-slot winner-slot' if ganador == jugador1 else 'player-slot'
-                        j2_class = 'player-slot winner-slot' if ganador == jugador2 else 'player-slot'
-                    
-                    # Crear el HTML del enfrentamiento
-                    match_html = f'''
-                    <div class="{match_class}">
-                        <div class="{j1_class}">{jugador1}</div>
-                        <div class="vs-indicator">VS</div>
-                        <div class="{j2_class}">{jugador2}</div>
-                        <div class="connector-line"></div>
-                    </div>
-                    '''
-                    
-                    st.markdown(match_html, unsafe_allow_html=True)
-                
-                elif jugador1:  # Pase automático
-                    bye_html = f'''
-                    <div class="match-container">
-                        <div class="bye-slot">🎯 {jugador1}<br><small>Pase automático</small></div>
-                        <div class="connector-line"></div>
-                    </div>
-                    '''
-                    st.markdown(bye_html, unsafe_allow_html=True)
-                    
-                    if ronda < num_rondas:
-                        bracket[ronda + 1][i // 2] = jugador1
-        
-        st.markdown('</div>', unsafe_allow_html=True)  # Cerrar bracket-round
-    
-    st.markdown('</div>', unsafe_allow_html=True)  # Cerrar tournament-bracket
-    
-    # Controles interactivos debajo del bracket
-    if puede_editar:
-        st.markdown("---")
-        st.subheader("🎮 Seleccionar Ganadores")
-        
-        # Crear columnas para los controles
-        cols = st.columns(num_rondas)
-        
-        for ronda in range(1, num_rondas + 1):
-            with cols[ronda - 1]:
-                if ronda == num_rondas:
-                    st.markdown("#### 🏆 FINAL")
-                elif ronda == num_rondas - 1 and num_rondas > 2:
-                    st.markdown("#### 🥉 SEMIFINAL")
-                else:
-                    st.markdown(f"#### Ronda {ronda}")
-                
-                participantes_ronda = bracket[ronda]
-                
-                for i in range(0, len(participantes_ronda), 2):
-                    if i + 1 < len(participantes_ronda):
-                        jugador1 = participantes_ronda[i]
-                        jugador2 = participantes_ronda[i + 1]
+                    if jugador1 and jugador2:
+                        # Determinar ganador
+                        if ronda == num_rondas:
+                            campeon_key = f'campeon_{categoria["id"]}'
+                            ganador = st.session_state.get(campeon_key)
+                        else:
+                            ganador = bracket[ronda + 1][i // 2] if ronda < num_rondas else None
                         
-                        if jugador1 and jugador2:
-                            match_key = f"match_r{ronda}_m{i//2}"
-                            
-                            if ronda == num_rondas:
-                                # Final - seleccionar campeón
-                                campeon_key = f'campeon_{categoria["id"]}'
-                                
-                                if st.button(f"👑 {jugador1}", key=f"{match_key}_j1", use_container_width=True):
-                                    st.session_state[campeon_key] = jugador1
-                                    st.rerun()
-                                
-                                if st.button(f"👑 {jugador2}", key=f"{match_key}_j2", use_container_width=True):
-                                    st.session_state[campeon_key] = jugador2
-                                    st.rerun()
+                        # Mostrar enfrentamiento
+                        st.markdown("---")
+                        
+                        if puede_editar:
+                            # Botón clickeable para jugador 1
+                            if ganador == jugador1:
+                                st.success(f"✅ {jugador1}")
                             else:
-                                # Rondas anteriores
-                                if st.button(f"✅ {jugador1}", key=f"{match_key}_j1", use_container_width=True):
-                                    bracket[ronda + 1][i // 2] = jugador1
-                                    st.rerun()
-                                
-                                if st.button(f"✅ {jugador2}", key=f"{match_key}_j2", use_container_width=True):
-                                    bracket[ronda + 1][i // 2] = jugador2
+                                if st.button(jugador1, key=f"r{ronda}_m{i//2}_j1", use_container_width=True):
+                                    if ronda == num_rondas:
+                                        st.session_state[f'campeon_{categoria["id"]}'] = jugador1
+                                    else:
+                                        bracket[ronda + 1][i // 2] = jugador1
                                     st.rerun()
                             
-                            st.markdown("---")
+                            st.markdown("<div style='text-align: center; color: #999; font-size: 12px;'>VS</div>", unsafe_allow_html=True)
+                            
+                            # Botón clickeable para jugador 2
+                            if ganador == jugador2:
+                                st.success(f"✅ {jugador2}")
+                            else:
+                                if st.button(jugador2, key=f"r{ronda}_m{i//2}_j2", use_container_width=True):
+                                    if ronda == num_rondas:
+                                        st.session_state[f'campeon_{categoria["id"]}'] = jugador2
+                                    else:
+                                        bracket[ronda + 1][i // 2] = jugador2
+                                    st.rerun()
+                        else:
+                            # Solo lectura
+                            if ganador == jugador1:
+                                st.success(f"✅ {jugador1}")
+                            else:
+                                st.info(jugador1)
+                            
+                            st.markdown("<div style='text-align: center; color: #999; font-size: 12px;'>VS</div>", unsafe_allow_html=True)
+                            
+                            if ganador == jugador2:
+                                st.success(f"✅ {jugador2}")
+                            else:
+                                st.info(jugador2)
+                        
+                        st.markdown("---")
+                    
+                    elif jugador1:  # Pase automático
+                        st.info(f"🎯 {jugador1}\n(Pase automático)")
+                        if ronda < num_rondas:
+                            bracket[ronda + 1][i // 2] = jugador1
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Mostrar campeón final
     campeon_key = f'campeon_{categoria["id"]}'
@@ -341,8 +214,7 @@ def vista_llaves_page():
             <div style='background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%); 
                         border-radius: 25px; padding: 40px; text-align: center; 
                         box-shadow: 0 15px 40px rgba(255,215,0,0.4); 
-                        border: 4px solid #FFD700; margin: 40px auto; max-width: 500px;
-                        transform: scale(1.05);'>
+                        border: 4px solid #FFD700; margin: 40px auto; max-width: 500px;'>
                 <h1 style='color: #333; margin: 0; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); font-size: 2.5em;'>
                     🏆 CAMPEÓN 🏆
                 </h1>
@@ -351,14 +223,6 @@ def vista_llaves_page():
             """, 
             unsafe_allow_html=True
         )
-    
-    # Botón guardar
-    if puede_editar:
-        st.markdown("---")
-        if st.button("💾 Guardar Bracket", type="primary"):
-            st.session_state[bracket_key] = bracket
-            st.success("✅ Bracket guardado exitosamente!")
-            st.rerun()
 
 if __name__ == "__main__":
     vista_llaves_page()
