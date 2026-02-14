@@ -29,11 +29,11 @@ def vista_llaves_page():
     }
     .round-header {
         text-align: center;
-        color: white;
+        color: #2c3e50;
         font-size: 20px;
         font-weight: bold;
         margin-bottom: 30px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
     }
     .match-box {
         background: white;
@@ -208,9 +208,15 @@ def vista_llaves_page():
             
             participantes_ronda = bracket[ronda]
             
-            # Calcular espaciado para centrar brackets
+            # Calcular espaciado inicial para centrar brackets verticalmente
             matches_in_round = len(participantes_ronda) // 2
-            spacing_multiplier = 2 ** (ronda - 1)
+            matches_in_prev_round = len(bracket[ronda - 1]) // 2 if ronda > 1 else 0
+            
+            # Agregar espaciado superior para centrar
+            if ronda > 1:
+                spacing_top = (2 ** (ronda - 1)) - 1
+                for _ in range(spacing_top):
+                    st.markdown("<div style='height: 80px;'></div>", unsafe_allow_html=True)
             
             # Mostrar enfrentamientos
             for i in range(0, len(participantes_ronda), 2):
@@ -275,10 +281,11 @@ def vista_llaves_page():
                             '''
                             st.markdown(match_html, unsafe_allow_html=True)
                     
-                    # Agregar espaciado vertical para centrar
+                    # Agregar espaciado vertical entre matches para centrar siguiente ronda
                     if i < len(participantes_ronda) - 2:
-                        for _ in range(spacing_multiplier - 1):
-                            st.markdown("<br>", unsafe_allow_html=True)
+                        spacing_between = (2 ** ronda) - 1
+                        for _ in range(spacing_between):
+                            st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
