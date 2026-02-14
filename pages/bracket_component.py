@@ -52,62 +52,74 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
             body {{
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 30px;
+                padding: 40px;
                 overflow-x: auto;
             }}
             
             .bracket-container {{
                 display: flex;
                 justify-content: center;
-                align-items: center;
                 min-height: 100vh;
                 padding: 20px;
             }}
             
             .bracket {{
                 display: flex;
-                gap: 80px;
+                gap: 60px;
                 position: relative;
             }}
             
             .round {{
                 display: flex;
                 flex-direction: column;
-                justify-content: space-around;
                 position: relative;
             }}
             
             .round-title {{
                 text-align: center;
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 15px;
                 color: #2c3e50;
                 background: white;
-                padding: 8px 16px;
+                padding: 8px 20px;
                 border-radius: 8px;
-                margin-bottom: 30px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                margin-bottom: 40px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            }}
+            
+            .match-wrapper {{
+                position: relative;
+                margin-bottom: 0;
             }}
             
             .match {{
-                position: relative;
                 display: flex;
                 flex-direction: column;
+                position: relative;
+            }}
+            
+            .player-line {{
+                display: flex;
+                align-items: center;
+                position: relative;
+                height: 40px;
+                margin: 0;
             }}
             
             .player {{
-                position: relative;
-                height: 35px;
+                background: white;
+                border: 2px solid #333;
+                padding: 0 15px;
+                height: 100%;
                 display: flex;
                 align-items: center;
-                padding: 0 15px;
-                background: white;
-                border: 2px solid #ddd;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.2s ease;
                 font-size: 14px;
                 font-weight: 500;
-                min-width: 200px;
+                min-width: 180px;
+                position: relative;
+                z-index: 10;
             }}
             
             .player:hover {{
@@ -127,66 +139,38 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 background: #f5f5f5;
                 color: #999;
                 cursor: default;
-                font-style: italic;
+                border-style: dashed;
             }}
             
             .player.bye:hover {{
                 transform: none;
                 background: #f5f5f5;
-                border-color: #ddd;
             }}
             
-            .player-top {{
-                border-radius: 5px 5px 0 0;
-                border-bottom: 1px solid #ddd;
-            }}
-            
-            .player-bottom {{
-                border-radius: 0 0 5px 5px;
-            }}
-            
-            /* Líneas conectoras */
-            .connector {{
+            /* Líneas horizontales */
+            .line-h {{
                 position: absolute;
-                background: #333;
-            }}
-            
-            .connector-h {{
                 height: 2px;
-                width: 40px;
-                right: -40px;
+                background: #333;
+                right: -30px;
+                width: 30px;
                 top: 50%;
                 transform: translateY(-1px);
+                z-index: 5;
             }}
             
-            .connector-v {{
+            /* Líneas verticales */
+            .line-v {{
+                position: absolute;
                 width: 2px;
-                right: -40px;
+                background: #333;
+                right: -30px;
+                z-index: 5;
             }}
             
             .final-match .player {{
                 border-color: #ffd700;
                 border-width: 3px;
-            }}
-            
-            .champion {{
-                text-align: center;
-                margin-top: 30px;
-                padding: 20px;
-                background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%);
-                border-radius: 15px;
-                box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-            }}
-            
-            .champion h2 {{
-                color: #333;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }}
-            
-            .champion h3 {{
-                color: #555;
-                font-size: 20px;
             }}
         </style>
     </head>
@@ -194,7 +178,6 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
         <div class="bracket-container">
             <div id="bracket" class="bracket"></div>
         </div>
-        <div id="champion-display"></div>
         
         <script>
             const bracketData = {json.dumps(bracket_data)};
@@ -252,6 +235,8 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 const bracket = document.getElementById('bracket');
                 bracket.innerHTML = '';
                 
+                const LINE_HEIGHT = 40;
+                
                 for (let round = 1; round <= bracketData.numRounds; round++) {{
                     const roundDiv = document.createElement('div');
                     roundDiv.className = 'round';
@@ -269,21 +254,24 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                     roundDiv.appendChild(title);
                     
                     const players = bracketState[round];
-                    const matchHeight = 80;
-                    const spacing = matchHeight * Math.pow(2, round - 1);
+                    const matchesInRound = players.length / 2;
+                    const verticalSpacing = LINE_HEIGHT * Math.pow(2, round);
                     
                     for (let i = 0; i < players.length; i += 2) {{
+                        const matchWrapper = document.createElement('div');
+                        matchWrapper.className = 'match-wrapper';
+                        
+                        // Espaciado entre matches
+                        if (i > 0) {{
+                            matchWrapper.style.marginTop = `${{verticalSpacing - LINE_HEIGHT}}px`;
+                        }} else if (round > 1) {{
+                            matchWrapper.style.marginTop = `${{(verticalSpacing / 2) - LINE_HEIGHT}}px`;
+                        }}
+                        
                         const matchDiv = document.createElement('div');
                         matchDiv.className = 'match';
                         if (round === bracketData.numRounds) {{
                             matchDiv.classList.add('final-match');
-                        }}
-                        
-                        // Espaciado superior
-                        if (i > 0) {{
-                            matchDiv.style.marginTop = `${{spacing}}px`;
-                        }} else if (round > 1) {{
-                            matchDiv.style.marginTop = `${{spacing / 2}}px`;
                         }}
                         
                         const p1 = players[i];
@@ -293,10 +281,14 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         
                         // Jugador 1
                         if (p1) {{
+                            const line1 = document.createElement('div');
+                            line1.className = 'player-line';
+                            
                             const player1 = document.createElement('div');
-                            player1.className = 'player player-top';
+                            player1.className = 'player';
                             if (p1 === "BYE") {{
                                 player1.classList.add('bye');
+                                player1.textContent = 'BYE';
                             }} else if (winner === p1) {{
                                 player1.classList.add('winner');
                                 player1.textContent = `✓ ${{p1}}`;
@@ -308,15 +300,28 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                                 player1.onclick = () => selectWinner(round, matchIndex, p1);
                             }}
                             
-                            matchDiv.appendChild(player1);
+                            line1.appendChild(player1);
+                            
+                            // Línea horizontal desde jugador 1
+                            if (round < bracketData.numRounds && p1 !== "BYE" && p2 !== "BYE") {{
+                                const lineH1 = document.createElement('div');
+                                lineH1.className = 'line-h';
+                                line1.appendChild(lineH1);
+                            }}
+                            
+                            matchDiv.appendChild(line1);
                         }}
                         
                         // Jugador 2
                         if (p2) {{
+                            const line2 = document.createElement('div');
+                            line2.className = 'player-line';
+                            
                             const player2 = document.createElement('div');
-                            player2.className = 'player player-bottom';
+                            player2.className = 'player';
                             if (p2 === "BYE") {{
                                 player2.classList.add('bye');
+                                player2.textContent = 'BYE';
                             }} else if (winner === p2) {{
                                 player2.classList.add('winner');
                                 player2.textContent = `✓ ${{p2}}`;
@@ -328,28 +333,29 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                                 player2.onclick = () => selectWinner(round, matchIndex, p2);
                             }}
                             
-                            matchDiv.appendChild(player2);
-                        }}
-                        
-                        // Líneas conectoras
-                        if (round < bracketData.numRounds && p1 && p2 && p1 !== "BYE" && p2 !== "BYE") {{
-                            // Línea horizontal desde el centro del match
-                            const connH = document.createElement('div');
-                            connH.className = 'connector connector-h';
-                            matchDiv.appendChild(connH);
+                            line2.appendChild(player2);
                             
-                            // Línea vertical solo en el primer match de cada par
-                            if (i % 4 === 0 && i + 2 < players.length) {{
-                                const connV = document.createElement('div');
-                                connV.className = 'connector connector-v';
-                                const verticalHeight = spacing + matchHeight;
-                                connV.style.top = `${{matchHeight / 2}}px`;
-                                connV.style.height = `${{verticalHeight}}px`;
-                                matchDiv.appendChild(connV);
+                            // Línea horizontal desde jugador 2
+                            if (round < bracketData.numRounds && p1 !== "BYE" && p2 !== "BYE") {{
+                                const lineH2 = document.createElement('div');
+                                lineH2.className = 'line-h';
+                                line2.appendChild(lineH2);
                             }}
+                            
+                            matchDiv.appendChild(line2);
                         }}
                         
-                        roundDiv.appendChild(matchDiv);
+                        // Línea vertical conectando los dos jugadores
+                        if (round < bracketData.numRounds && p1 && p2 && p1 !== "BYE" && p2 !== "BYE") {{
+                            const lineV = document.createElement('div');
+                            lineV.className = 'line-v';
+                            lineV.style.top = `${{LINE_HEIGHT / 2}}px`;
+                            lineV.style.height = `${{LINE_HEIGHT}}px`;
+                            matchDiv.appendChild(lineV);
+                        }}
+                        
+                        matchWrapper.appendChild(matchDiv);
+                        roundDiv.appendChild(matchWrapper);
                     }}
                     
                     bracket.appendChild(roundDiv);
