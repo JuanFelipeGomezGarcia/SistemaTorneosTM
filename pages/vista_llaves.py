@@ -5,21 +5,77 @@ import math
 def vista_llaves_page():
     """Vista de llaves eliminatorias estilo bracket tradicional"""
     
-    # CSS para bracket con líneas conectoras
+    # CSS para bracket con diseño tradicional
     st.markdown("""
     <style>
     .bracket-wrapper {
-        background: #f8f9fa;
-        padding: 30px;
-        border-radius: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 20px;
         overflow-x: auto;
+        margin: 20px 0;
     }
-    .bracket-title {
+    .bracket-container {
+        display: flex;
+        gap: 80px;
+        justify-content: center;
+        align-items: center;
+    }
+    .bracket-round {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        min-width: 220px;
+    }
+    .round-header {
         text-align: center;
-        font-size: 28px;
+        color: white;
+        font-size: 20px;
         font-weight: bold;
-        color: #2c3e50;
         margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .match-box {
+        background: white;
+        border-radius: 10px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        overflow: hidden;
+    }
+    .player-item {
+        padding: 15px 20px;
+        border-bottom: 2px solid #e0e0e0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 16px;
+    }
+    .player-item:last-child {
+        border-bottom: none;
+    }
+    .player-item:hover {
+        background: #e3f2fd;
+        transform: translateX(5px);
+    }
+    .player-winner {
+        background: #4caf50;
+        color: white;
+        font-weight: bold;
+    }
+    .player-winner:hover {
+        background: #45a049;
+    }
+    .vs-divider {
+        text-align: center;
+        padding: 5px;
+        background: #f5f5f5;
+        font-size: 12px;
+        color: #999;
+        font-weight: bold;
+    }
+    .final-box {
+        border: 3px solid #ffd700;
+        box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -120,9 +176,22 @@ def vista_llaves_page():
     
     bracket = st.session_state[bracket_key]
     
-    # Mostrar bracket estilo tradicional
+    # Procesar pases automáticos
+    for ronda in range(1, num_rondas):
+        participantes_ronda = bracket[ronda]
+        for i in range(0, len(participantes_ronda), 2):
+            if i + 1 < len(participantes_ronda):
+                jugador1 = participantes_ronda[i]
+                jugador2 = participantes_ronda[i + 1]
+                
+                # Si solo hay un jugador, pasa automáticamente
+                if jugador1 and not jugador2:
+                    bracket[ronda + 1][i // 2] = jugador1
+                elif jugador2 and not jugador1:
+                    bracket[ronda + 1][i // 2] = jugador2
+    
+    # Mostrar bracket
     st.markdown('<div class="bracket-wrapper">', unsafe_allow_html=True)
-    st.markdown('<div class="bracket-title">🏆 LLAVES ELIMINATORIAS</div>', unsafe_allow_html=True)
     
     # Crear columnas para cada ronda
     ronda_cols = st.columns(num_rondas)
@@ -131,13 +200,17 @@ def vista_llaves_page():
         with ronda_cols[ronda - 1]:
             # Título de la ronda
             if ronda == num_rondas:
-                st.markdown("### 🏆 FINAL")
+                st.markdown('<div class="round-header">🏆 FINAL</div>', unsafe_allow_html=True)
             elif ronda == num_rondas - 1 and num_rondas > 2:
-                st.markdown("### 🥉 SEMIFINAL")
+                st.markdown('<div class="round-header">🥉 SEMIFINAL</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f"### Ronda {ronda}")
+                st.markdown(f'<div class="round-header">Ronda {ronda}</div>', unsafe_allow_html=True)
             
             participantes_ronda = bracket[ronda]
+            
+            # Calcular espaciado para centrar brackets
+            matches_in_round = len(participantes_ronda) // 2
+            spacing_multiplier = 2 ** (ronda - 1)
             
             # Mostrar enfrentamientos
             for i in range(0, len(participantes_ronda), 2):
@@ -145,6 +218,7 @@ def vista_llaves_page():
                     jugador1 = participantes_ronda[i]
                     jugador2 = participantes_ronda[i + 1]
                     
+                    # Solo mostrar si ambos jugadores existen
                     if jugador1 and jugador2:
                         # Determinar ganador
                         if ronda == num_rondas:
@@ -153,13 +227,19 @@ def vista_llaves_page():
                         else:
                             ganador = bracket[ronda + 1][i // 2] if ronda < num_rondas else None
                         
-                        # Mostrar enfrentamiento
-                        st.markdown("---")
+                        # Clase CSS para final
+                        box_class = "match-box final-box" if ronda == num_rondas else "match-box"
+                        
+                        # Crear el match box con HTML
+                        match_html = f'<div class="{box_class}">'
                         
                         if puede_editar:
-                            # Botón clickeable para jugador 1
+                            # Mostrar como HTML pero usar botones de Streamlit
+                            st.markdown(match_html, unsafe_allow_html=True)
+                            
+                            # Jugador 1
                             if ganador == jugador1:
-                                st.success(f"✅ {jugador1}")
+                                st.markdown(f'<div class="player-item player-winner">✅ {jugador1}</div>', unsafe_allow_html=True)
                             else:
                                 if st.button(jugador1, key=f"r{ronda}_m{i//2}_j1", use_container_width=True):
                                     if ronda == num_rondas:
@@ -168,11 +248,11 @@ def vista_llaves_page():
                                         bracket[ronda + 1][i // 2] = jugador1
                                     st.rerun()
                             
-                            st.markdown("<div style='text-align: center; color: #999; font-size: 12px;'>VS</div>", unsafe_allow_html=True)
+                            st.markdown('<div class="vs-divider">VS</div>', unsafe_allow_html=True)
                             
-                            # Botón clickeable para jugador 2
+                            # Jugador 2
                             if ganador == jugador2:
-                                st.success(f"✅ {jugador2}")
+                                st.markdown(f'<div class="player-item player-winner">✅ {jugador2}</div>', unsafe_allow_html=True)
                             else:
                                 if st.button(jugador2, key=f"r{ronda}_m{i//2}_j2", use_container_width=True):
                                     if ronda == num_rondas:
@@ -180,26 +260,25 @@ def vista_llaves_page():
                                     else:
                                         bracket[ronda + 1][i // 2] = jugador2
                                     st.rerun()
+                            
+                            st.markdown('</div>', unsafe_allow_html=True)
                         else:
                             # Solo lectura
-                            if ganador == jugador1:
-                                st.success(f"✅ {jugador1}")
-                            else:
-                                st.info(jugador1)
+                            player1_class = "player-item player-winner" if ganador == jugador1 else "player-item"
+                            player2_class = "player-item player-winner" if ganador == jugador2 else "player-item"
                             
-                            st.markdown("<div style='text-align: center; color: #999; font-size: 12px;'>VS</div>", unsafe_allow_html=True)
-                            
-                            if ganador == jugador2:
-                                st.success(f"✅ {jugador2}")
-                            else:
-                                st.info(jugador2)
-                        
-                        st.markdown("---")
+                            match_html += f'''
+                                <div class="{player1_class}">{"✅ " if ganador == jugador1 else ""}{jugador1}</div>
+                                <div class="vs-divider">VS</div>
+                                <div class="{player2_class}">{"✅ " if ganador == jugador2 else ""}{jugador2}</div>
+                            </div>
+                            '''
+                            st.markdown(match_html, unsafe_allow_html=True)
                     
-                    elif jugador1:  # Pase automático
-                        st.info(f"🎯 {jugador1}\n(Pase automático)")
-                        if ronda < num_rondas:
-                            bracket[ronda + 1][i // 2] = jugador1
+                    # Agregar espaciado vertical para centrar
+                    if i < len(participantes_ronda) - 2:
+                        for _ in range(spacing_multiplier - 1):
+                            st.markdown("<br>", unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
