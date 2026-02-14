@@ -11,7 +11,8 @@ class DatabaseOperations:
         try:
             response = self.supabase.table('administradores').select('*').eq('usuario', usuario).eq('password', password).execute()
             return len(response.data) > 0
-        except:
+        except Exception as e:
+            print(f"Error verificando admin: {e}")
             return False
     
     # Operaciones de Torneos
@@ -31,14 +32,16 @@ class DatabaseOperations:
         try:
             response = self.supabase.table('torneos').select('*').order('created_at', desc=True).execute()
             return response.data
-        except:
+        except Exception as e:
+            print(f"Error obteniendo torneos: {e}")
             return []
     
     def actualizar_estado_torneo(self, torneo_id, estado):
         try:
             self.supabase.table('torneos').update({'estado': estado}).eq('id', torneo_id).execute()
             return True
-        except:
+        except Exception as e:
+            print(f"Error actualizando estado torneo: {e}")
             return False
     
     # Operaciones de Categorías
@@ -59,7 +62,8 @@ class DatabaseOperations:
         try:
             response = self.supabase.table('categorias').select('*').eq('torneo_id', torneo_id).execute()
             return response.data
-        except:
+        except Exception as e:
+            print(f"Error obteniendo categorias: {e}")
             return []
     
     def actualizar_categoria(self, categoria_id, nombre, cantidad_cuadros, personas_por_cuadro):
@@ -70,7 +74,8 @@ class DatabaseOperations:
                 'personas_por_cuadro': personas_por_cuadro
             }).eq('id', categoria_id).execute()
             return True
-        except:
+        except Exception as e:
+            print(f"Error actualizando categoria: {e}")
             return False
     
     # Operaciones de Participantes
@@ -83,14 +88,16 @@ class DatabaseOperations:
                 'posicion_en_cuadro': posicion_en_cuadro
             }).execute()
             return True
-        except:
+        except Exception as e:
+            print(f"Error agregando participante: {e}")
             return False
     
     def obtener_participantes(self, categoria_id):
         try:
             response = self.supabase.table('participantes').select('*').eq('categoria_id', categoria_id).execute()
             return response.data
-        except:
+        except Exception as e:
+            print(f"Error obteniendo participantes: {e}")
             return []
     
     def actualizar_participante_cuadro(self, participante_id, cuadro_numero, posicion_en_cuadro):
@@ -100,7 +107,8 @@ class DatabaseOperations:
                 'posicion_en_cuadro': posicion_en_cuadro
             }).eq('id', participante_id).execute()
             return True
-        except:
+        except Exception as e:
+            print(f"Error actualizando participante: {e}")
             return False
     
     # Operaciones de Partidos
@@ -127,12 +135,14 @@ class DatabaseOperations:
                     'ganador': ganador
                 }).execute()
             return True
-        except:
+        except Exception as e:
+            print(f"Error guardando resultado: {e}")
             return False
     
     def obtener_partidos(self, categoria_id):
         try:
             response = self.supabase.table('partidos').select('*').eq('categoria_id', categoria_id).execute()
             return response.data
-        except:
+        except Exception as e:
+            print(f"Error obteniendo partidos: {e}")
             return []

@@ -64,7 +64,9 @@ def login_page():
                 submit = st.form_submit_button("Iniciar Sesión")
                 
                 if submit:
-                    if db.verificar_admin(usuario, password):
+                    if not usuario or not password:
+                        st.error("Por favor completa todos los campos")
+                    elif db.verificar_admin(usuario, password):
                         st.session_state.user_type = "admin"
                         st.session_state.authenticated = True
                         st.session_state.current_page = 'home'
@@ -157,20 +159,23 @@ def crear_torneo_page():
         
         submit = st.form_submit_button("Crear Torneo")
         
-        if submit and nombre_torneo:
-            torneo_id = db.crear_torneo(nombre_torneo, fecha_torneo)
-            if torneo_id:
-                st.success("Torneo creado exitosamente!")
-                # Cargar el torneo recién creado
-                torneos = db.obtener_torneos()
-                for torneo in torneos:
-                    if torneo['id'] == torneo_id:
-                        st.session_state.selected_tournament = torneo
-                        break
-                st.session_state.current_page = 'editar_torneo'
-                st.rerun()
+        if submit:
+            if not nombre_torneo or not nombre_torneo.strip():
+                st.error("❌ El nombre del torneo es obligatorio")
             else:
-                st.error("Error al crear el torneo")
+                torneo_id = db.crear_torneo(nombre_torneo.strip(), fecha_torneo)
+                if torneo_id:
+                    st.success("Torneo creado exitosamente!")
+                    # Cargar el torneo recién creado
+                    torneos = db.obtener_torneos()
+                    for torneo in torneos:
+                        if torneo['id'] == torneo_id:
+                            st.session_state.selected_tournament = torneo
+                            break
+                    st.session_state.current_page = 'editar_torneo'
+                    st.rerun()
+                else:
+                    st.error("❌ Error al crear el torneo")
 
 def editar_torneo_page():
     """Página para editar torneo (agregar categorías)"""
@@ -350,6 +355,10 @@ def crear_categoria_page():
             personas_que_pasan_final = st.session_state.get('personas_pasan', 2)
             
             # Validaciones antes de guardar
+            if not nombre_categoria.strip():
+                st.error("❌ El nombre de la categoría es obligatorio")
+                return
+            
             if len(participantes_lista) < personas_por_cuadro_final:
                 st.error(f"❌ Necesitas al menos {personas_por_cuadro_final} participantes")
                 return
@@ -363,15 +372,13 @@ def crear_categoria_page():
             
             if categoria:
                 # Actualizar categoría existente
-                if db.actualizar_categoria(categoria['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro_final):
-                    # Actualizar participantes (simplificado - eliminar y recrear)
-                    # En una implementación completa, sería mejor hacer un merge
+                if db.actualizar_categoria(categoria['id'], nombre_categoria.strip(), cantidad_cuadros, personas_por_cuadro_final):
                     st.success("✅ Categoría actualizada exitosamente!")
                 else:
                     st.error("❌ Error al actualizar la categoría")
             else:
                 # Crear nueva categoría
-                categoria_id = db.crear_categoria(torneo['id'], nombre_categoria, cantidad_cuadros, personas_por_cuadro_final)
+                categoria_id = db.crear_categoria(torneo['id'], nombre_categoria.strip(), cantidad_cuadros, personas_por_cuadro_final)
                 if categoria_id:
                     # Agregar participantes
                     for participante in participantes_lista:
