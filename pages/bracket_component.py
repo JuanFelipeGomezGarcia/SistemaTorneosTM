@@ -168,6 +168,24 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 z-index: 5;
             }}
             
+            /* Línea de conexión entre rondas */
+            .connector-h {{
+                position: absolute;
+                height: 2px;
+                background: #333;
+                right: -60px;
+                width: 30px;
+                z-index: 5;
+            }}
+            
+            .connector-v {{
+                position: absolute;
+                width: 2px;
+                background: #333;
+                right: -60px;
+                z-index: 5;
+            }}
+            
             .final-match .player {{
                 border-color: #ffd700;
                 border-width: 3px;
@@ -352,6 +370,24 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                             lineV.style.top = `${{LINE_HEIGHT / 2}}px`;
                             lineV.style.height = `${{LINE_HEIGHT}}px`;
                             matchDiv.appendChild(lineV);
+                        }}
+                        
+                        // Línea de conexión a la siguiente ronda
+                        if (round < bracketData.numRounds && (p1 !== "BYE" || p2 !== "BYE")) {{
+                            const connectorH = document.createElement('div');
+                            connectorH.className = 'connector-h';
+                            connectorH.style.top = `${{LINE_HEIGHT}}px`;
+                            matchDiv.appendChild(connectorH);
+                        }}
+                        
+                        // Línea vertical entre matches para conectar a la siguiente ronda
+                        if (round < bracketData.numRounds && i > 0 && i % 4 === 0) {{
+                            const connectorV = document.createElement('div');
+                            connectorV.className = 'connector-v';
+                            const prevMatchHeight = verticalSpacing;
+                            connectorV.style.top = `${{-prevMatchHeight + LINE_HEIGHT}}px`;
+                            connectorV.style.height = `${{prevMatchHeight}}px`;
+                            matchDiv.appendChild(connectorV);
                         }}
                         
                         matchWrapper.appendChild(matchDiv);
