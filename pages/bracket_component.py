@@ -278,7 +278,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                             }} else if (round === 2) {{
                                 matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
                             }} else {{
-                                matchWrapper.style.marginTop = `${{LINE_HEIGHT}}px`;
+                                matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
                             }}
                         }} else if (round > 1) {{
                             // Primera casilla de rondas 2+ debe centrarse entre las líneas de ronda anterior
