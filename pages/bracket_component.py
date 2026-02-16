@@ -363,11 +363,26 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                             lineV.style.height = `${{LINE_HEIGHT}}px`;
                             matchDiv.appendChild(lineV);
                             
-                            // Línea horizontal hacia la siguiente ronda (desde el centro del match)
+                            // Línea horizontal hacia la siguiente ronda
                             const connectorH = document.createElement('div');
                             connectorH.className = 'connector-to-next';
-                            connectorH.style.top = `${{LINE_HEIGHT}}px`;
+                            // Calcular la posición exacta del centro del match
+                            const centerY = LINE_HEIGHT;
+                            connectorH.style.top = `${{centerY}}px`;
                             matchDiv.appendChild(connectorH);
+                        }}
+                        
+                        // Línea vertical entre pares de matches hacia la siguiente ronda
+                        if (round < bracketData.numRounds && i % 2 === 0 && i + 2 < players.length) {{
+                            const nextMatchConnector = document.createElement('div');
+                            nextMatchConnector.style.position = 'absolute';
+                            nextMatchConnector.style.width = '2px';
+                            nextMatchConnector.style.background = '#333';
+                            nextMatchConnector.style.left = 'calc(100% + 60px)';
+                            nextMatchConnector.style.top = `${{LINE_HEIGHT}}px`;
+                            nextMatchConnector.style.height = `${{verticalSpacing}}px`;
+                            nextMatchConnector.style.zIndex = '5';
+                            matchDiv.appendChild(nextMatchConnector);
                         }}
                         
                         matchWrapper.appendChild(matchDiv);
