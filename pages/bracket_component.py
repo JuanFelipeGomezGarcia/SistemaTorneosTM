@@ -106,7 +106,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 margin: 0;
             }}
             
-            .player {
+            .player {{
                 background: white;
                 border: 2px solid #333;
                 padding: 0 15px;
