@@ -265,7 +265,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                     
                     const players = bracketState[round];
                     const matchesInRound = players.length / 2;
-                    const verticalSpacing = LINE_HEIGHT * Math.pow(2, round);
+                    const verticalSpacing = round === 1 ? LINE_HEIGHT : LINE_HEIGHT * Math.pow(2, round - 1);
                     
                     for (let i = 0; i < players.length; i += 2) {{
                         const matchWrapper = document.createElement('div');
@@ -273,9 +273,9 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         
                         // Espaciado entre matches
                         if (i > 0) {{
-                            matchWrapper.style.marginTop = `${{verticalSpacing - LINE_HEIGHT}}px`;
+                            matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
                         }} else if (round > 1) {{
-                            matchWrapper.style.marginTop = `${{(verticalSpacing / 2) - LINE_HEIGHT}}px`;
+                            matchWrapper.style.marginTop = `${{verticalSpacing / 2}}px`;
                         }}
                         
                         const matchDiv = document.createElement('div');
