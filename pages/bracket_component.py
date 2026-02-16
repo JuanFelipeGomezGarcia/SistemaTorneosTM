@@ -102,7 +102,6 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 display: flex;
                 align-items: center;
                 position: relative;
-                height: 50px;
                 margin: 0;
             }}
             
@@ -110,7 +109,6 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 background: white;
                 border: 2px solid #333;
                 padding: 0 15px;
-                height: 100%;
                 display: flex;
                 align-items: center;
                 cursor: pointer;
@@ -289,13 +287,18 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         const matchIndex = Math.floor(i / 2);
                         const winner = round < bracketData.numRounds ? bracketState[round + 1][matchIndex] : null;
                         
+                        // Altura dinámica según la ronda
+                        const playerHeight = LINE_HEIGHT * Math.pow(2, round - 1);
+                        
                         // Jugador 1
                         if (p1) {{
                             const line1 = document.createElement('div');
                             line1.className = 'player-line';
+                            line1.style.height = `${{playerHeight}}px`;
                             
                             const player1 = document.createElement('div');
                             player1.className = 'player';
+                            player1.style.height = `${{playerHeight}}px`;
                             if (p1 === "BYE") {{
                                 player1.classList.add('bye');
                                 player1.textContent = 'BYE';
@@ -326,9 +329,11 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         if (p2) {{
                             const line2 = document.createElement('div');
                             line2.className = 'player-line';
+                            line2.style.height = `${{playerHeight}}px`;
                             
                             const player2 = document.createElement('div');
                             player2.className = 'player';
+                            player2.style.height = `${{playerHeight}}px`;
                             if (p2 === "BYE") {{
                                 player2.classList.add('bye');
                                 player2.textContent = 'BYE';
@@ -359,14 +364,14 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         if (round < bracketData.numRounds && p1 && p2 && p1 !== "BYE" && p2 !== "BYE") {{
                             const lineV = document.createElement('div');
                             lineV.className = 'line-v';
-                            lineV.style.top = `${{LINE_HEIGHT / 2}}px`;
-                            lineV.style.height = `${{LINE_HEIGHT}}px`;
+                            lineV.style.top = `${{playerHeight / 2}}px`;
+                            lineV.style.height = `${{playerHeight}}px`;
                             matchDiv.appendChild(lineV);
                             
                             // Línea horizontal hacia la siguiente ronda
                             const connectorH = document.createElement('div');
                             connectorH.className = 'connector-to-next';
-                            connectorH.style.top = `${{LINE_HEIGHT}}px`;
+                            connectorH.style.top = `${{playerHeight}}px`;
                             matchDiv.appendChild(connectorH);
                         }}
                         
