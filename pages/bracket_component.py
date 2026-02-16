@@ -275,6 +275,8 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         if (i > 0) {{
                             if (round === 1) {{
                                 matchWrapper.style.marginTop = `${{LINE_HEIGHT}}px`;
+                            }} else if (round === 2) {{
+                                matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
                             }} else {{
                                 matchWrapper.style.marginTop = `${{verticalSpacing - LINE_HEIGHT}}px`;
                             }}
