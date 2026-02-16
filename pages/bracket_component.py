@@ -65,7 +65,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
             
             .bracket {{
                 display: flex;
-                gap: 0px;
+                gap: 80px;
                 position: relative;
             }}
             
@@ -153,7 +153,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 height: 2px;
                 background: #333;
                 left: 100%;
-                width: 0px;
+                width: 40px;
                 top: 50%;
                 transform: translateY(-1px);
                 z-index: 5;
@@ -164,7 +164,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 position: absolute;
                 width: 2px;
                 background: #333;
-                left: 100%;
+                left: calc(100% + 40px);
                 z-index: 5;
             }}
             
@@ -173,8 +173,8 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 position: absolute;
                 height: 2px;
                 background: #333;
-                left: 100%;
-                width: 0px;
+                left: calc(100% + 40px);
+                width: 40px;
                 z-index: 5;
             }}
             
