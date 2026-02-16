@@ -275,18 +275,13 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         if (i > 0) {{
                             if (round === 1) {{
                                 matchWrapper.style.marginTop = `${{LINE_HEIGHT}}px`;
-                            }} else if (round === 2) {{
-                                matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
                             }} else {{
-                                matchWrapper.style.marginTop = `${{verticalSpacing + 50}}px`;
+                                // Fórmula universal: espaciado proporcional a la ronda
+                                matchWrapper.style.marginTop = `${{verticalSpacing - LINE_HEIGHT}}px`;
                             }}
                         }} else if (round > 1) {{
-                            // Primera casilla de rondas 2+ debe centrarse entre las líneas de ronda anterior
-                            if (round === 3) {{
-                                matchWrapper.style.marginTop = `${{verticalSpacing / 2}}px`;
-                            }} else {{
-                                matchWrapper.style.marginTop = `${{(verticalSpacing / 2) - (LINE_HEIGHT / 2)}}px`;
-                            }}
+                            // Primera casilla de rondas 2+ centrada entre líneas de ronda anterior
+                            matchWrapper.style.marginTop = `${{(verticalSpacing / 2) - (LINE_HEIGHT / 2)}}px`;
                         }}
                         
                         const matchDiv = document.createElement('div');
