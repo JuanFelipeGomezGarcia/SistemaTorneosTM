@@ -3,16 +3,33 @@ import pandas as pd
 from typing import List, Dict
 
 def generar_cuadros(participantes: List[str], cantidad_cuadros: int, personas_por_cuadro: int):
-    """Genera los cuadros distribuyendo los participantes"""
+    """
+    Genera los cuadros distribuyendo los participantes con sistema serpentina (snake draft).
+    
+    Ejemplo con 4 cuadros y 8 participantes:
+      Ronda 1 (ida):    Pos 1→C1, Pos 2→C2, Pos 3→C3, Pos 4→C4
+      Ronda 2 (vuelta):  Pos 5→C4, Pos 6→C3, Pos 7→C2, Pos 8→C1
+    
+    Esto garantiza distribución equilibrada basada en el orden de inscripción.
+    """
     cuadros = {}
     
     # Inicializar cuadros vacíos
     for i in range(1, cantidad_cuadros + 1):
         cuadros[i] = []
     
-    # Distribuir participantes
+    # Distribución serpentina (snake draft)
     for idx, participante in enumerate(participantes):
-        cuadro_num = (idx % cantidad_cuadros) + 1
+        ronda = idx // cantidad_cuadros  # En qué ronda de distribución estamos
+        pos_en_ronda = idx % cantidad_cuadros  # Posición dentro de la ronda
+        
+        if ronda % 2 == 0:
+            # Ronda par (ida): 1, 2, 3, 4
+            cuadro_num = pos_en_ronda + 1
+        else:
+            # Ronda impar (vuelta): 4, 3, 2, 1
+            cuadro_num = cantidad_cuadros - pos_en_ronda
+        
         if len(cuadros[cuadro_num]) < personas_por_cuadro:
             cuadros[cuadro_num].append(participante)
     
