@@ -154,8 +154,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 background: #333;
                 left: 100%;
                 width: 50px;
-                top: 50%;
-                transform: translateY(-1px);
+                top: 19px;
                 z-index: 5;
             }}
             
@@ -359,14 +358,14 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         if (round < bracketData.numRounds && p1 && p2 && p1 !== "BYE" && p2 !== "BYE") {{
                             const lineV = document.createElement('div');
                             lineV.className = 'line-v';
-                            lineV.style.top = `${{LINE_HEIGHT / 2}}px`;
+                            lineV.style.top = `19px`;
                             lineV.style.height = `${{LINE_HEIGHT}}px`;
                             matchDiv.appendChild(lineV);
                             
                             // Línea horizontal hacia la siguiente ronda
                             const connectorH = document.createElement('div');
                             connectorH.className = 'connector-to-next';
-                            connectorH.style.top = `${{LINE_HEIGHT}}px`;
+                            connectorH.style.top = `${{LINE_HEIGHT - 1}}px`;
                             matchDiv.appendChild(connectorH);
                         }}
                         
