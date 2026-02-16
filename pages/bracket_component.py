@@ -102,7 +102,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 display: flex;
                 align-items: center;
                 position: relative;
-                height: 40px;
+                height: 50px;
                 margin: 0;
             }}
             
@@ -245,7 +245,7 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 const bracket = document.getElementById('bracket');
                 bracket.innerHTML = '';
                 
-                const LINE_HEIGHT = 40;
+                const LINE_HEIGHT = 50;
                 
                 for (let round = 1; round <= bracketData.numRounds; round++) {{
                     const roundDiv = document.createElement('div');
