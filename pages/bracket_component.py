@@ -273,7 +273,11 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         
                         // Espaciado entre matches - centrar en la mitad del espacio
                         if (i > 0) {{
-                            matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
+                            if (round === 1) {{
+                                matchWrapper.style.marginTop = `${{LINE_HEIGHT}}px`;
+                            }} else {{
+                                matchWrapper.style.marginTop = `${{verticalSpacing}}px`;
+                            }}
                         }} else if (round > 1) {{
                             // Primera casilla de rondas 2+ debe centrarse entre las líneas de ronda anterior
                             matchWrapper.style.marginTop = `${{(verticalSpacing / 2) - (LINE_HEIGHT / 2)}}px`;
