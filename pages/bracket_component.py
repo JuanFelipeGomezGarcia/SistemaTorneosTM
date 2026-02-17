@@ -569,47 +569,38 @@ def render_bracket(players, categoria_id, puede_editar=True):
     
     # Intentar cargar desde DB (para tener datos frescos en tiempo real)
     # Convertir keys de string a int porque JSONB guarda todo como string
-    skip_load_key = f'skip_db_load_{categoria_id}'
-    should_skip = st.session_state.get(skip_load_key, False)
-    
-    db_state_data = None
-    if not should_skip:
-        db_state_data = db.obtener_estado_llaves(categoria_id)
-    else:
-        # Reset flag
-        st.session_state[skip_load_key] = False
-    
-    if db_state_data:
-        raw_state = db_state_data.get('bracket_state', {})
-        # Convertir claves numéricas de vuelta a int
-        converted_state = {}
-        for k, v in raw_state.items():
-            if k.isdigit():
-                converted_state[int(k)] = v
-            else:
-                converted_state[k] = v
-        
-        # Actualizar session_state con datos frescos de la DB
-        st.session_state[bracket_key] = converted_state
-        if db_state_data.get('campeon'):
-            st.session_state[campeon_key] = db_state_data['campeon']
-    
+    # Intentar cargar desde DB SOLO si no hay estado local (al abrir la página por primera vez)
+    # Si ya hay estado local en session_state, lo respetamos (puede tener cambios sin guardar)
     if bracket_key not in st.session_state:
-        st.session_state[bracket_key] = {}
-        
+        db_state_data = db.obtener_estado_llaves(categoria_id)
+        if db_state_data:
+            # .... lógica de conversión ...
+            raw_state = db_state_data.get('bracket_state', {})
+            converted_state = {}
+            for k, v in raw_state.items():
+                if k.isdigit():
+                    converted_state[int(k)] = v
+                else:
+                    converted_state[k] = v
+            st.session_state[bracket_key] = converted_state
+            if db_state_data.get('campeon'):
+                st.session_state[campeon_key] = db_state_data['campeon']
+        else:
+             st.session_state[bracket_key] = {}
+    
     bracket_state = st.session_state[bracket_key]
     
     # Inicializar bracket si está vacío
     if not bracket_state or 1 not in bracket_state:
+        # ... inicialización normal ...
         players_init = players.copy()
         while len(players_init) < next_power:
             players_init.append("BYE")
         bracket_state[1] = players_init[:]
         for r in range(2, num_rounds + 1):
-            prev = bracket_state[r - 1]
-            bracket_state[r] = [None] * (len(prev) // 2)
-        
-        # Procesar BYEs automáticamente
+             prev = bracket_state[r - 1]
+             bracket_state[r] = [None] * (len(prev) // 2)
+        # Procesar BYEs
         for r in range(1, num_rounds):
             rplayers = bracket_state[r]
             for i in range(0, len(rplayers), 2):
@@ -621,7 +612,7 @@ def render_bracket(players, categoria_id, puede_editar=True):
                     bracket_state[r + 1][i // 2] = p1
         
         st.session_state[bracket_key] = bracket_state
-        # Guardar estado inicial DB
+        # Guardar estado inicial en DB sí es seguro hacerlo automático
         db.guardar_estado_llaves(categoria_id, bracket_state)
     
     # Procesar selección de campeón desde query params (click en la final)
@@ -639,12 +630,8 @@ def render_bracket(players, categoria_id, puede_editar=True):
         st.session_state[campeon_key] = bw_champion
         bracket_state['champion'] = bw_champion
         
-        # Guardar en DB
-        db.guardar_estado_llaves(categoria_id, bracket_state, bw_champion)
-        
-        # Evitar recarga inmediata de DB para usar datos locales frescos
-        st.session_state[skip_load_key] = True
-        
+        # SOLO Actualizar localmente. El guardado es manual.
+        st.session_state['unsaved_changes'] = True
         st.query_params.clear()
         st.rerun()
 
@@ -665,25 +652,32 @@ def render_bracket(players, categoria_id, puede_editar=True):
 
                 bracket_state[next_r][m_idx] = bw_player_mid
                 
-                # Guardar en DB (campeon se mantiene igual, se pasa None para no borrarlo si existe? 
-                # No, el metodo guardar hace upsert. Si paso None en campeon, quizas lo borre?
-                # Revisemos guardar_estado_llaves: usa 'campeon': campeon. Si es None, guarda NULL.
-                # Debo pasar el campeon actual si existe.
-                current_champion = bracket_state.get('champion')
-                db.guardar_estado_llaves(categoria_id, bracket_state, current_champion)
-                
+                # SOLO Actualizar localmente.
                 st.session_state[bracket_key] = bracket_state
-                
-                # Evitar recarga inmediata de DB
-                st.session_state[skip_load_key] = True
+                st.session_state['unsaved_changes'] = True
             
             st.query_params.clear()
             st.rerun()
         except Exception as e:
-            st.error(f"Error al guardar cambios: {e}")
-            # print(f"Error updating bracket: {e}")
+            st.error(f"Error al actualizar localmente: {e}")
             st.query_params.clear()
 
+    # Botón de GUARDAR CAMBIOS (Manual)
+    if puede_editar:
+        col_save, col_status = st.columns([1, 4])
+        with col_save:
+            if st.button("💾 Guardar Cambios", type="primary", use_container_width=True):
+                current_champion = bracket_state.get('champion')
+                if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
+                    st.session_state['unsaved_changes'] = False
+                    st.success("¡Cambios guardados en base de datos!")
+                else:
+                    st.error("Error al guardar en base de datos.")
+        
+        with col_status:
+            if st.session_state.get('unsaved_changes'):
+                st.warning("⚠️ Tienes cambios sin guardar. Haz click en 'Guardar Cambios'.")
+    
     # Generar HTML
     html_code = generate_bracket_html(players, bracket_state, categoria_id, puede_editar)
     
