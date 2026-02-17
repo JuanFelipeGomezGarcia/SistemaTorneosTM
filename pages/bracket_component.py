@@ -374,8 +374,9 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         matchWrapper.className = 'match-wrapper';
                         
                         // Spacing between matches
+                        const extraGap = round === 1 ? 12 : 0;
                         if (i > 0) {{
-                            matchWrapper.style.marginTop = `${{verticalSpacing - MATCH_HEIGHT}}px`;
+                            matchWrapper.style.marginTop = `${{verticalSpacing - MATCH_HEIGHT + extraGap}}px`;
                         }} else if (round > 1) {{
                             matchWrapper.style.marginTop = `${{(verticalSpacing - MATCH_HEIGHT) / 2}}px`;
                         }}
