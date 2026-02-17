@@ -322,16 +322,17 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 
                 if (round < bracketData.numRounds) {{
                     bracketState[round + 1][matchIndex] = player;
-                    renderBracket();
                 }} else {{
-                    // Final: enviar campeón al parent via postMessage
+                    // Final: actualizar estado local y enviar mensaje
+                    bracketState['champion'] = player;
+                    console.log("Champion selected:", player);
                     window.parent.postMessage({{
                         type: 'bracket_champion',
                         player: player,
                         categoriaId: bracketData.categoriaId
                     }}, '*');
-                    renderBracket();
                 }}
+                renderBracket();
             }}
             
             function renderBracket() {{
@@ -387,7 +388,13 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                         const p1 = players[i];
                         const p2 = players[i + 1];
                         const matchIndex = Math.floor(i / 2);
-                        const winner = round < bracketData.numRounds ? bracketState[round + 1]?.[matchIndex] : null;
+                        let winner = null;
+                        if (round < bracketData.numRounds) {{
+                            winner = bracketState[round + 1]?.[matchIndex];
+                        }} else {{
+                            winner = bracketState['champion'] || bracketState.champion;
+                        }}
+                        
                         const isFinalAndWon = round === bracketData.numRounds && winner;
                         
                         // Create player slots
