@@ -322,17 +322,14 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 
                 if (round < bracketData.numRounds) {{
                     bracketState[round + 1][matchIndex] = player;
+                    renderBracket();
+                }} else {{
+                    // Final: comunicar campeón a Streamlit via query param
+                    const url = new URL(window.parent.location.href);
+                    url.searchParams.set('bw_champion', player);
+                    url.searchParams.set('bw_cat', bracketData.categoriaId);
+                    window.parent.location.href = url.toString();
                 }}
-                
-                window.parent.postMessage({{
-                    type: round === bracketData.numRounds ? 'champion' : 'winner',
-                    categoriaId: bracketData.categoriaId,
-                    round: round,
-                    matchIndex: matchIndex,
-                    winner: player
-                }}, '*');
-                
-                renderBracket();
             }}
             
             function renderBracket() {{
@@ -556,32 +553,16 @@ def render_bracket(players, categoria_id, puede_editar=True):
     base_height = max(next_power * 55, 400)  # 55px por jugador mínimo
     dynamic_height = min(base_height + 120, 1200)  # Cap en 1200px
     
+    # Procesar selección de campeón desde query params (click en la final)
+    params = st.query_params
+    bw_champion = params.get('bw_champion', '')
+    bw_cat = params.get('bw_cat', '')
+    
+    if bw_champion and bw_cat and str(categoria_id) == str(bw_cat) and puede_editar:
+        campeon_key = f'campeon_{categoria_id}'
+        st.session_state[campeon_key] = bw_champion
+        st.query_params.clear()
+        st.rerun()
+    
     # Renderizar componente
     components.html(html_code, height=dynamic_height, scrolling=True)
-    
-    # Selector de campeón (único selectbox nativo para la final)
-    if puede_editar and len(players) >= 2:
-        st.markdown("---")
-        st.markdown("### 🏆 Seleccionar Campeón")
-        
-        campeon_key = f'campeon_{categoria_id}'
-        current_champion = st.session_state.get(campeon_key)
-        
-        options = ["Seleccionar ganador..."] + [p for p in players if p != "BYE"]
-        current_idx = 0
-        if current_champion and current_champion in options:
-            current_idx = options.index(current_champion)
-        
-        winner = st.selectbox(
-            "Ganador de la final",
-            options,
-            index=current_idx,
-            key=f"final_winner_{categoria_id}",
-            label_visibility="collapsed"
-        )
-        
-        new_champion = winner if winner != "Seleccionar ganador..." else None
-        
-        if new_champion != current_champion:
-            st.session_state[campeon_key] = new_champion
-            st.rerun()
