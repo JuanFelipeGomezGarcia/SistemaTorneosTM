@@ -3,7 +3,7 @@ from database.db_operations import DatabaseOperations
 from utils.tournament_utils import generar_cuadros
 
 def vista_cuadros_page():
-    """Vista de cuadros tipo tabla Round Robin - Diseño Premium"""
+    """Vista de cuadros tipo tabla Round Robin - Diseño Premium con edición inline"""
     
     # ─── CSS Global Premium ───
     st.markdown("""
@@ -59,156 +59,97 @@ def vista_cuadros_page():
         transition: width 0.4s ease;
     }
     
-    /* ── Tabla Round Robin ── */
-    .rr-table-container {
-        background: #ffffff;
-        border-radius: 0 0 16px 16px;
-        padding: 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-        overflow-x: auto;
-    }
-    .rr-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Inter', sans-serif;
-    }
-    .rr-table th {
+    /* ── Estilos para celdas de la tabla ── */
+    .rr-header-cell {
         background: #1e293b;
         color: #f1f5f9;
-        padding: 14px 12px;
+        padding: 12px 8px;
+        text-align: center;
         font-weight: 600;
         font-size: 13px;
-        text-align: center;
         border: 1px solid #334155;
-        white-space: nowrap;
+        border-radius: 0;
+        font-family: 'Inter', sans-serif;
     }
-    .rr-table th:first-child {
-        text-align: left;
-        padding-left: 16px;
-        min-width: 160px;
-    }
-    .rr-table td {
-        padding: 0;
-        border: 1px solid #e2e8f0;
+    .rr-header-cell-first {
+        background: #1e293b;
+        color: #f1f5f9;
+        padding: 12px 8px;
         text-align: center;
-        font-size: 13px;
-        height: 48px;
-        vertical-align: middle;
-    }
-    .rr-table td:first-child {
-        text-align: left;
-        padding: 10px 16px;
         font-weight: 600;
+        font-size: 12px;
+        border: 1px solid #334155;
+        font-family: 'Inter', sans-serif;
+    }
+    .rr-name-cell {
         background: #f8fafc;
         color: #1e293b;
-        white-space: nowrap;
-    }
-    .rr-table tr:hover td:first-child {
-        background: #f1f5f9;
-    }
-    .cell-diagonal {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-    }
-    .cell-win {
-        background: #dcfce7 !important;
-        color: #166534 !important;
-        font-weight: 700;
-        font-size: 14px;
-    }
-    .cell-loss {
-        background: #fee2e2 !important;
-        color: #991b1b !important;
+        padding: 10px 12px;
         font-weight: 600;
-        font-size: 14px;
-    }
-    .cell-pending {
-        background: #f8fafc !important;
-        color: #94a3b8 !important;
+        font-size: 13px;
+        border: 1px solid #e2e8f0;
+        font-family: 'Inter', sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .player-num {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         background: #667eea;
         color: white;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        margin-right: 8px;
-    }
-    
-    /* ── Tabla de Posiciones ── */
-    .ranking-section {
-        margin-top: 0;
-        padding: 24px;
-        background: #ffffff;
-        border-radius: 0 0 16px 16px;
-        border-top: 2px solid #e2e8f0;
-    }
-    .ranking-section h4 {
-        color: #1e293b;
-        margin: 0 0 16px 0;
-        font-size: 16px;
-        font-weight: 700;
-    }
-    .ranking-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Inter', sans-serif;
-    }
-    .ranking-table th {
-        background: #f1f5f9;
-        color: #475569;
-        padding: 10px 12px;
-        font-weight: 600;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #e2e8f0;
-        text-align: center;
-    }
-    .ranking-table th:nth-child(2) {
-        text-align: left;
-    }
-    .ranking-table td {
-        padding: 12px;
-        border-bottom: 1px solid #f1f5f9;
-        text-align: center;
-        font-size: 14px;
-        color: #334155;
-    }
-    .ranking-table td:nth-child(2) {
-        text-align: left;
-        font-weight: 600;
-    }
-    .ranking-table tr:hover td {
-        background: #f8fafc;
-    }
-    .rank-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 13px;
-    }
-    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; }
-    .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; }
-    .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
-    .rank-other { background: #f1f5f9; color: #64748b; }
-    .clasificado-tag {
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        color: #fff;
+        border-radius: 5px;
         font-size: 10px;
         font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-right: 6px;
+    }
+    .cell-diagonal {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        height: 45px;
+        border: 1px solid #334155;
+    }
+    .cell-win {
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid #bbf7d0;
+        font-family: 'Inter', sans-serif;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cell-loss {
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid #fecaca;
+        font-family: 'Inter', sans-serif;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cell-pending {
+        background: #f8fafc;
+        color: #94a3b8;
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        font-family: 'Inter', sans-serif;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     /* ── Header Principal ── */
@@ -242,6 +183,15 @@ def vista_cuadros_page():
         margin: 8px 0 0 0;
         font-size: 16px;
         font-family: 'Inter', sans-serif;
+    }
+    
+    /* Cerrar cuadro wrapper con borde inferior */
+    .cuadro-bottom {
+        background: #ffffff;
+        border-radius: 0 0 16px 16px;
+        padding: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        border-top: 1px solid #e2e8f0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -287,7 +237,6 @@ def vista_cuadros_page():
     
     cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
     partidos_guardados = db.obtener_partidos(categoria['id'])
-    personas_que_pasan = categoria.get('personas_que_pasan', 2)
     
     total_cuadros = len(cuadros)
     
@@ -299,17 +248,21 @@ def vista_cuadros_page():
         jugadores = participantes_cuadro
         n = len(jugadores)
         
+        # Construir lookup de resultados
+        resultado_map = {}
+        for p in partidos_guardados:
+            if p['cuadro_numero'] == cuadro_num:
+                key = (p['jugador1'], p['jugador2'])
+                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
+        
         # Calcular progreso
         total_partidos = n * (n - 1) // 2
         partidos_completados = 0
-        for i, j1 in enumerate(jugadores):
-            for j, j2 in enumerate(jugadores):
-                if i < j:
-                    for p in partidos_guardados:
-                        if (p['cuadro_numero'] == cuadro_num and
-                            p['jugador1'] == j1 and p['jugador2'] == j2 and p['resultado']):
-                            partidos_completados += 1
-                            break
+        for i in range(n):
+            for j in range(i + 1, n):
+                res = resultado_map.get((jugadores[i], jugadores[j]))
+                if res and res['resultado']:
+                    partidos_completados += 1
         
         progreso_pct = (partidos_completados / total_partidos * 100) if total_partidos > 0 else 0
         
@@ -328,175 +281,114 @@ def vista_cuadros_page():
                 </div>
             </div>
         </div>
+        </div>
         """, unsafe_allow_html=True)
         
-        # ── Generar tabla Round Robin como HTML ──
-        # Construir lookup de resultados
-        resultado_map = {}
-        for p in partidos_guardados:
-            if p['cuadro_numero'] == cuadro_num:
-                key = (p['jugador1'], p['jugador2'])
-                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
+        # ── Tabla Round Robin con st.columns (edición inline) ──
         
-        # Header de tabla
-        table_html = "<div class='rr-table-container'><table class='rr-table'><thead><tr>"
-        table_html += "<th>DEPORTISTA / EQUIPO</th>"
+        # Encabezado de la tabla
+        cols = st.columns([2] + [1 for _ in jugadores])
+        cols[0].markdown("<div class='rr-header-cell-first'>DEPORTISTA / EQUIPO</div>", unsafe_allow_html=True)
         for i in range(n):
-            table_html += f"<th>{i+1}</th>"
-        table_html += "</tr></thead><tbody>"
+            cols[i+1].markdown(f"<div class='rr-header-cell'>{i+1}</div>", unsafe_allow_html=True)
         
-        # Filas
+        # Filas de la tabla
         for i, jugador_fila in enumerate(jugadores):
-            table_html += "<tr>"
-            table_html += f"<td><span class='player-num'>{i+1}</span>{jugador_fila}</td>"
+            cols = st.columns([2] + [1 for _ in jugadores])
+            
+            # Nombre del jugador
+            cols[0].markdown(f"<div class='rr-name-cell'><span class='player-num'>{i+1}</span>{jugador_fila}</div>", unsafe_allow_html=True)
             
             for j, jugador_col in enumerate(jugadores):
+                
+                # Celda diagonal
                 if i == j:
-                    table_html += "<td class='cell-diagonal'></td>"
+                    cols[j+1].markdown("<div class='cell-diagonal'></div>", unsafe_allow_html=True)
                     continue
                 
-                # Buscar resultado
+                # Buscar resultado guardado (buscar en ambas direcciones)
                 res_data = resultado_map.get((jugador_fila, jugador_col))
+                resultado_guardado = ""
+                ganador_guardado = ""
                 
-                if not puede_editar:
-                    # Solo lectura
-                    if res_data and res_data['resultado']:
-                        if res_data['ganador'] == jugador_fila:
-                            table_html += f"<td class='cell-win'>{res_data['resultado']}</td>"
-                        else:
-                            table_html += f"<td class='cell-loss'>{res_data['resultado']}</td>"
-                    else:
-                        table_html += "<td class='cell-pending'>—</td>"
-                else:
-                    # Modo admin: cerrar HTML, usar selectbox de Streamlit, luego reabrir
-                    table_html += "<td class='cell-pending'>⏎</td>"
-            
-            table_html += "</tr>"
-        
-        table_html += "</tbody></table></div>"
-        
-        # Renderizar tabla (solo lectura) o usar sistema mixto
-        if not puede_editar:
-            st.markdown(table_html, unsafe_allow_html=True)
-        else:
-            # Para admin: usar columnas de Streamlit para editar resultados
-            st.markdown(table_html.replace("⏎", "↓"), unsafe_allow_html=True)
-            
-            st.markdown(f"##### ✏️ Editar resultados — Cuadro {cuadro_num}")
-            
-            # Mostrar solo la mitad superior (sin duplicados)
-            for i, jugador_fila in enumerate(jugadores):
-                for j, jugador_col in enumerate(jugadores):
-                    if i >= j:
-                        continue
-                    
-                    res_data = resultado_map.get((jugador_fila, jugador_col))
-                    resultado_actual = res_data['resultado'] if res_data else ""
-                    
-                    col1, col2, col3 = st.columns([3, 2, 3])
-                    with col1:
-                        st.markdown(f"**{jugador_fila}**")
-                    with col2:
+                if res_data and res_data['resultado']:
+                    resultado_guardado = res_data['resultado']
+                    ganador_guardado = res_data['ganador']
+                
+                # Celda editable o de solo lectura
+                if puede_editar:
+                    # Solo permitir editar la mitad superior (i < j)
+                    if i < j:
                         key = f"rr_{cuadro_num}_{i}_{j}"
                         opciones = ["", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"]
-                        idx_actual = opciones.index(resultado_actual) if resultado_actual in opciones else 0
-                        nuevo_resultado = st.selectbox(
-                            "vs",
-                            opciones,
-                            index=idx_actual,
-                            key=key,
-                            label_visibility="collapsed"
-                        )
+                        idx_actual = opciones.index(resultado_guardado) if resultado_guardado in opciones else 0
                         
-                        if nuevo_resultado != resultado_actual:
-                            if nuevo_resultado == "":
-                                if resultado_actual:
-                                    db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador_fila, jugador_col, "", "")
-                                    st.rerun()
+                        with cols[j+1]:
+                            nuevo_resultado = st.selectbox(
+                                f"{jugador_fila} vs {jugador_col}",
+                                opciones,
+                                index=idx_actual,
+                                key=key,
+                                label_visibility="collapsed"
+                            )
+                            
+                            # Guardar si cambió
+                            if nuevo_resultado != resultado_guardado:
+                                if nuevo_resultado == "":
+                                    if resultado_guardado:
+                                        db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador_fila, jugador_col, "", "")
+                                        st.rerun()
+                                else:
+                                    try:
+                                        partes = nuevo_resultado.split("-")
+                                        num1, num2 = int(partes[0]), int(partes[1])
+                                        ganador = jugador_fila if num1 > num2 else jugador_col
+                                        db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador_fila, jugador_col, nuevo_resultado, ganador)
+                                        st.rerun()
+                                    except (ValueError, IndexError):
+                                        st.error("Formato inválido")
+                    else:
+                        # Mitad inferior: mostrar resultado espejo (solo lectura)
+                        res_espejo = resultado_map.get((jugador_col, jugador_fila))
+                        if res_espejo and res_espejo['resultado']:
+                            # Invertir el resultado para mostrarlo desde la perspectiva de la fila
+                            resultado_original = res_espejo['resultado']
+                            try:
+                                partes = resultado_original.split("-")
+                                resultado_invertido = f"{partes[1]}-{partes[0]}"
+                            except:
+                                resultado_invertido = resultado_original
+                            
+                            if res_espejo['ganador'] == jugador_fila:
+                                cols[j+1].markdown(f"<div class='cell-win'>{resultado_invertido}</div>", unsafe_allow_html=True)
                             else:
-                                try:
-                                    partes = nuevo_resultado.split("-")
-                                    num1, num2 = int(partes[0]), int(partes[1])
-                                    ganador = jugador_fila if num1 > num2 else jugador_col
-                                    db.guardar_resultado_partido(categoria['id'], cuadro_num, jugador_fila, jugador_col, nuevo_resultado, ganador)
-                                    st.rerun()
-                                except (ValueError, IndexError):
-                                    st.error("Formato inválido")
-                    with col3:
-                        st.markdown(f"**{jugador_col}**")
-        
-        # ── Tabla de Posiciones ──
-        victorias = {p: 0 for p in jugadores}
-        derrotas = {p: 0 for p in jugadores}
-        sets_ganados = {p: 0 for p in jugadores}
-        sets_perdidos = {p: 0 for p in jugadores}
-        partidos_jugados = {p: 0 for p in jugadores}
-        
-        for key, data in resultado_map.items():
-            j1, j2 = key
-            if data['resultado'] and j1 in victorias and j2 in victorias:
-                partidos_jugados[j1] += 1
-                partidos_jugados[j2] += 1
-                try:
-                    s1, s2 = map(int, data['resultado'].split('-'))
-                    sets_ganados[j1] += s1
-                    sets_perdidos[j1] += s2
-                    sets_ganados[j2] += s2
-                    sets_perdidos[j2] += s1
-                except:
-                    pass
-                if data['ganador'] == j1:
-                    victorias[j1] += 1
-                    derrotas[j2] += 1
-                elif data['ganador'] == j2:
-                    victorias[j2] += 1
-                    derrotas[j1] += 1
-        
-        # Ordenar por victorias, luego por diferencia de sets
-        ranking = sorted(jugadores, key=lambda x: (victorias[x], sets_ganados[x] - sets_perdidos[x]), reverse=True)
-        
-        ranking_html = """
-        <div class='ranking-section'>
-            <h4>📊 Tabla de Posiciones</h4>
-            <table class='ranking-table'>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Jugador</th>
-                        <th>PJ</th>
-                        <th>V</th>
-                        <th>D</th>
-                        <th>SG</th>
-                        <th>SP</th>
-                        <th>Dif</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-        
-        for pos, jugador in enumerate(ranking, 1):
-            rank_class = f"rank-{pos}" if pos <= 3 else "rank-other"
-            dif = sets_ganados[jugador] - sets_perdidos[jugador]
-            dif_str = f"+{dif}" if dif > 0 else str(dif)
-            clasif_tag = f"<span class='clasificado-tag'>Clasifica</span>" if pos <= personas_que_pasan else ""
-            
-            ranking_html += f"""
-                <tr>
-                    <td><span class='rank-badge {rank_class}'>{pos}</span></td>
-                    <td>{jugador} {clasif_tag}</td>
-                    <td>{partidos_jugados[jugador]}</td>
-                    <td><strong>{victorias[jugador]}</strong></td>
-                    <td>{derrotas[jugador]}</td>
-                    <td>{sets_ganados[jugador]}</td>
-                    <td>{sets_perdidos[jugador]}</td>
-                    <td><strong>{dif_str}</strong></td>
-                    <td></td>
-                </tr>
-            """
-        
-        ranking_html += "</tbody></table></div></div>"  # Close ranking-section and cuadro-wrapper
-        st.markdown(ranking_html, unsafe_allow_html=True)
+                                cols[j+1].markdown(f"<div class='cell-loss'>{resultado_invertido}</div>", unsafe_allow_html=True)
+                        else:
+                            cols[j+1].markdown("<div class='cell-pending'>—</div>", unsafe_allow_html=True)
+                
+                else:
+                    # Solo lectura (competidor)
+                    if resultado_guardado:
+                        if ganador_guardado == jugador_fila:
+                            cols[j+1].markdown(f"<div class='cell-win'>{resultado_guardado}</div>", unsafe_allow_html=True)
+                        else:
+                            cols[j+1].markdown(f"<div class='cell-loss'>{resultado_guardado}</div>", unsafe_allow_html=True)
+                    else:
+                        # Buscar resultado espejo
+                        res_espejo = resultado_map.get((jugador_col, jugador_fila))
+                        if res_espejo and res_espejo['resultado']:
+                            try:
+                                partes = res_espejo['resultado'].split("-")
+                                resultado_invertido = f"{partes[1]}-{partes[0]}"
+                            except:
+                                resultado_invertido = res_espejo['resultado']
+                            
+                            if res_espejo['ganador'] == jugador_fila:
+                                cols[j+1].markdown(f"<div class='cell-win'>{resultado_invertido}</div>", unsafe_allow_html=True)
+                            else:
+                                cols[j+1].markdown(f"<div class='cell-loss'>{resultado_invertido}</div>", unsafe_allow_html=True)
+                        else:
+                            cols[j+1].markdown("<div class='cell-pending'>—</div>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
     
