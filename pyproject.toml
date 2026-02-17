@@ -1,0 +1,6 @@
+[tool.pyre]
+search_path = ["."]
+
+[tool.pyright]
+pythonPlatform = "Windows"
+extraPaths = ["."]
