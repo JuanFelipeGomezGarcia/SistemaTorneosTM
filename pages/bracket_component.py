@@ -324,13 +324,15 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                     bracketState[round + 1][matchIndex] = player;
                 }}
                 
-                // Comunicar selección a Streamlit via query params
-                const url = new URL(window.parent.location.href);
-                url.searchParams.set('bw_cat', bracketData.categoriaId);
-                url.searchParams.set('bw_round', round);
-                url.searchParams.set('bw_match', matchIndex);
-                url.searchParams.set('bw_player', player);
-                window.parent.location.href = url.toString();
+                window.parent.postMessage({{
+                    type: round === bracketData.numRounds ? 'champion' : 'winner',
+                    categoriaId: bracketData.categoriaId,
+                    round: round,
+                    matchIndex: matchIndex,
+                    winner: player
+                }}, '*');
+                
+                renderBracket();
             }}
             
             function renderBracket() {{
@@ -535,13 +537,8 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
 
 def render_bracket(players, categoria_id, puede_editar=True):
     """
-    Renderiza el bracket en Streamlit.
-    Los clicks dentro del bracket usan query params para comunicar la selección.
+    Renderiza el bracket en Streamlit
     """
-    num_players = len(players)
-    num_rounds = math.ceil(math.log2(num_players)) if num_players > 1 else 1
-    next_power = 2 ** num_rounds
-    
     # Obtener estado del bracket desde session_state
     bracket_key = f'bracket_state_{categoria_id}'
     if bracket_key not in st.session_state:
@@ -549,84 +546,15 @@ def render_bracket(players, categoria_id, puede_editar=True):
     
     bracket_state = st.session_state[bracket_key]
     
-    # Inicializar bracket si está vacío
-    if not bracket_state or 1 not in bracket_state:
-        players_init = players.copy()
-        while len(players_init) < next_power:
-            players_init.append("BYE")
-        bracket_state[1] = players_init[:]
-        for r in range(2, num_rounds + 1):
-            prev = bracket_state[r - 1]
-            bracket_state[r] = [None] * (len(prev) // 2)
-        
-        # Procesar BYEs automáticamente
-        for r in range(1, num_rounds):
-            rplayers = bracket_state[r]
-            for i in range(0, len(rplayers), 2):
-                p1 = rplayers[i]
-                p2 = rplayers[i + 1] if i + 1 < len(rplayers) else None
-                if p1 == "BYE" and p2 and p2 != "BYE":
-                    bracket_state[r + 1][i // 2] = p2
-                elif p2 == "BYE" and p1 and p1 != "BYE":
-                    bracket_state[r + 1][i // 2] = p1
-        
-        st.session_state[bracket_key] = bracket_state
-    
-    # ─── Procesar selección de ganador desde query params ───
-    params = st.query_params
-    bw_cat = params.get('bw_cat', '')
-    bw_round = params.get('bw_round', '')
-    bw_match = params.get('bw_match', '')
-    bw_player = params.get('bw_player', '')
-    
-    if bw_cat and bw_round and bw_match and bw_player and puede_editar:
-        try:
-            sel_cat = str(bw_cat)
-            sel_round = int(bw_round)
-            sel_match = int(bw_match)
-            sel_player = str(bw_player)
-            
-            if str(categoria_id) == sel_cat and sel_round <= num_rounds:
-                if sel_round < num_rounds:
-                    next_r = sel_round + 1
-                    if next_r not in bracket_state:
-                        bracket_state[next_r] = [None] * (len(bracket_state[sel_round]) // 2)
-                    if sel_match < len(bracket_state[next_r]):
-                        bracket_state[next_r][sel_match] = sel_player
-                    # Limpiar rondas posteriores
-                    _clear_downstream(bracket_state, next_r, sel_match, num_rounds)
-                else:
-                    bracket_state['champion'] = sel_player
-                    campeon_key = f'campeon_{categoria_id}'
-                    st.session_state[campeon_key] = sel_player
-                
-                st.session_state[bracket_key] = bracket_state
-            
-            st.query_params.clear()
-            st.rerun()
-        except (ValueError, IndexError):
-            st.query_params.clear()
-            st.rerun()
-    
     # Generar HTML
     html_code = generate_bracket_html(players, bracket_state, categoria_id, puede_editar)
     
-    # Calcular altura dinámica
-    base_height = max(next_power * 55, 400)
-    dynamic_height = min(base_height + 120, 1200)
+    # Calcular altura dinámica basada en el número de jugadores
+    num_players = len(players)
+    num_rounds = math.ceil(math.log2(num_players)) if num_players > 1 else 1
+    next_power = 2 ** num_rounds
+    base_height = max(next_power * 55, 400)  # 55px por jugador mínimo
+    dynamic_height = min(base_height + 120, 1200)  # Cap en 1200px
     
     # Renderizar componente
     components.html(html_code, height=dynamic_height, scrolling=True)
-
-
-def _clear_downstream(bracket_state, from_round, match_index, num_rounds):
-    """Cuando se cambia un ganador, limpia las rondas posteriores."""
-    next_r = from_round + 1
-    if next_r > num_rounds:
-        if 'champion' in bracket_state:
-            bracket_state['champion'] = None
-        return
-    next_match = match_index // 2
-    if next_r in bracket_state and next_match < len(bracket_state[next_r]):
-        bracket_state[next_r][next_match] = None
-        _clear_downstream(bracket_state, next_r, next_match, num_rounds)
