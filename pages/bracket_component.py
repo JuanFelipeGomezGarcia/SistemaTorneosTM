@@ -324,11 +324,13 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                     bracketState[round + 1][matchIndex] = player;
                     renderBracket();
                 }} else {{
-                    // Final: comunicar campeón a Streamlit via query param
-                    const url = new URL(window.parent.location.href);
-                    url.searchParams.set('bw_champion', player);
-                    url.searchParams.set('bw_cat', bracketData.categoriaId);
-                    window.parent.location.href = url.toString();
+                    // Final: enviar campeón al parent via postMessage
+                    window.parent.postMessage({{
+                        type: 'bracket_champion',
+                        player: player,
+                        categoriaId: bracketData.categoriaId
+                    }}, '*');
+                    renderBracket();
                 }}
             }}
             
@@ -563,6 +565,23 @@ def render_bracket(players, categoria_id, puede_editar=True):
         st.session_state[campeon_key] = bw_champion
         st.query_params.clear()
         st.rerun()
+    
+    # Inyectar listener en la página padre para capturar postMessage del iframe
+    st.markdown(f"""
+    <script>
+    if (!window._bracketListenerAdded) {{
+        window._bracketListenerAdded = true;
+        window.addEventListener('message', function(event) {{
+            if (event.data && event.data.type === 'bracket_champion') {{
+                const url = new URL(window.location.href);
+                url.searchParams.set('bw_champion', event.data.player);
+                url.searchParams.set('bw_cat', event.data.categoriaId);
+                window.location.href = url.toString();
+            }}
+        }});
+    }}
+    </script>
+    """, unsafe_allow_html=True)
     
     # Renderizar componente
     components.html(html_code, height=dynamic_height, scrolling=True)
