@@ -214,6 +214,56 @@ def vista_llaves_page():
         st.session_state.current_page = 'vista_cuadros'
         st.rerun()
     
+    # Obtener clasificados
+    participantes_data = db.obtener_participantes(categoria['id'])
+    participantes = [p['nombre'] for p in participantes_data]
+    
+    from utils.tournament_utils import generar_cuadros
+    cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
+    partidos = db.obtener_partidos(categoria['id'])
+    personas_que_pasan = categoria.get('personas_que_pasan', 2)
+    
+    # Calcular clasificados
+    clasificados = []
+    
+    for cuadro_num in sorted(cuadros.keys()):
+        participantes_cuadro = cuadros[cuadro_num]
+        if len(participantes_cuadro) < 2:
+            continue
+            
+        victorias = {p: 0 for p in participantes_cuadro}
+        sets_ganados = {p: 0 for p in participantes_cuadro}
+        sets_perdidos = {p: 0 for p in participantes_cuadro}
+        
+        for partido in partidos:
+            if partido['cuadro_numero'] == cuadro_num and partido['ganador']:
+                if partido['ganador'] in victorias:
+                    victorias[partido['ganador']] += 1
+                try:
+                    s1, s2 = map(int, partido['resultado'].split('-'))
+                    if partido['jugador1'] in sets_ganados:
+                        sets_ganados[partido['jugador1']] += s1
+                        sets_perdidos[partido['jugador1']] += s2
+                    if partido['jugador2'] in sets_ganados:
+                        sets_ganados[partido['jugador2']] += s2
+                        sets_perdidos[partido['jugador2']] += s1
+                except:
+                    pass
+        
+        jugadores_ordenados = sorted(
+            participantes_cuadro, 
+            key=lambda x: (victorias.get(x, 0), sets_ganados.get(x, 0) - sets_perdidos.get(x, 0)), 
+            reverse=True
+        )
+        
+        for pos_idx in range(min(personas_que_pasan, len(jugadores_ordenados))):
+            jugador = jugadores_ordenados[pos_idx]
+            clasificados.append(jugador)
+    
+    if len(clasificados) < 2:
+        st.warning("⚠️ Se necesitan al menos 2 clasificados. Completa los resultados en los cuadros.")
+        return
+    
     # Botón para regenerar llaves
     if puede_editar:
         col1, col2 = st.columns([3, 1])
