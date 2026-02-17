@@ -558,3 +558,30 @@ def render_bracket(players, categoria_id, puede_editar=True):
     
     # Renderizar componente
     components.html(html_code, height=dynamic_height, scrolling=True)
+    
+    # Selector de campeón (único selectbox nativo para la final)
+    if puede_editar and len(players) >= 2:
+        st.markdown("---")
+        st.markdown("### 🏆 Seleccionar Campeón")
+        
+        campeon_key = f'campeon_{categoria_id}'
+        current_champion = st.session_state.get(campeon_key)
+        
+        options = ["Seleccionar ganador..."] + [p for p in players if p != "BYE"]
+        current_idx = 0
+        if current_champion and current_champion in options:
+            current_idx = options.index(current_champion)
+        
+        winner = st.selectbox(
+            "Ganador de la final",
+            options,
+            index=current_idx,
+            key=f"final_winner_{categoria_id}",
+            label_visibility="collapsed"
+        )
+        
+        new_champion = winner if winner != "Seleccionar ganador..." else None
+        
+        if new_champion != current_champion:
+            st.session_state[campeon_key] = new_champion
+            st.rerun()
