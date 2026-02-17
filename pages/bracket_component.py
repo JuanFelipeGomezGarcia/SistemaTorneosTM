@@ -637,6 +637,7 @@ def render_bracket(players, categoria_id, puede_editar=True):
 
     # Lógica de actualización RONDAS INTERMEDIAS
     if bw_round and bw_match and bw_player_mid and bw_cat and str(categoria_id) == str(bw_cat) and puede_editar:
+        print(f"DEBUG UPDATE: Round={bw_round} Match={bw_match} Player={bw_player_mid}")
         try:
             r_idx = int(bw_round)
             m_idx = int(bw_match)
@@ -655,18 +656,24 @@ def render_bracket(players, categoria_id, puede_editar=True):
                 # SOLO Actualizar localmente.
                 st.session_state[bracket_key] = bracket_state
                 st.session_state['unsaved_changes'] = True
+                print(f"DEBUG: Updated local state for NextRound {next_r}: {bracket_state[next_r]}")
             
             st.query_params.clear()
             st.rerun()
         except Exception as e:
             st.error(f"Error al actualizar localmente: {e}")
+            print(f"ERROR UPDATE: {e}")
             st.query_params.clear()
+    else:
+        if bw_round:
+            print(f"DEBUG: Ignored update params. CatMatch={str(categoria_id) == str(bw_cat)} Edit={puede_editar}")
 
     # Botón de GUARDAR CAMBIOS (Manual)
     if puede_editar:
         col_save, col_status = st.columns([1, 4])
         with col_save:
             if st.button("💾 Guardar Cambios", type="primary", use_container_width=True):
+                print(f"DEBUG SAVING: {bracket_state}")
                 current_champion = bracket_state.get('champion')
                 if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
                     st.session_state['unsaved_changes'] = False
