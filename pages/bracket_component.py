@@ -569,7 +569,15 @@ def render_bracket(players, categoria_id, puede_editar=True):
     
     # Intentar cargar desde DB (para tener datos frescos en tiempo real)
     # Convertir keys de string a int porque JSONB guarda todo como string
-    db_state_data = db.obtener_estado_llaves(categoria_id)
+    skip_load_key = f'skip_db_load_{categoria_id}'
+    should_skip = st.session_state.get(skip_load_key, False)
+    
+    db_state_data = None
+    if not should_skip:
+        db_state_data = db.obtener_estado_llaves(categoria_id)
+    else:
+        # Reset flag
+        st.session_state[skip_load_key] = False
     
     if db_state_data:
         raw_state = db_state_data.get('bracket_state', {})
@@ -634,6 +642,9 @@ def render_bracket(players, categoria_id, puede_editar=True):
         # Guardar en DB
         db.guardar_estado_llaves(categoria_id, bracket_state, bw_champion)
         
+        # Evitar recarga inmediata de DB para usar datos locales frescos
+        st.session_state[skip_load_key] = True
+        
         st.query_params.clear()
         st.rerun()
 
@@ -662,6 +673,9 @@ def render_bracket(players, categoria_id, puede_editar=True):
                 db.guardar_estado_llaves(categoria_id, bracket_state, current_champion)
                 
                 st.session_state[bracket_key] = bracket_state
+                
+                # Evitar recarga inmediata de DB
+                st.session_state[skip_load_key] = True
             
             st.query_params.clear()
             st.rerun()
