@@ -7,6 +7,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import json
 import math
+from database.db_operations import DatabaseOperations
+
 
 def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=True):
     """
@@ -322,8 +324,16 @@ def generate_bracket_html(players, bracket_state, categoria_id, puede_editar=Tru
                 
                 if (round < bracketData.numRounds) {{
                     bracketState[round + 1][matchIndex] = player;
+                    // Persistencia intermedia: notificar al parent
+                    window.parent.postMessage({{
+                        type: 'bracket_update',
+                        player: player,
+                        categoriaId: bracketData.categoriaId,
+                        round: round,
+                        matchIndex: matchIndex
+                    }}, '*');
                 }} else {{
-                    // Final: actualizar estado local y enviar mensaje
+                    // Final: comunicar campeón
                     bracketState['champion'] = player;
                     console.log("Champion selected:", player);
                     window.parent.postMessage({{
@@ -545,33 +555,126 @@ def render_bracket(players, categoria_id, puede_editar=True):
     """
     Renderiza el bracket en Streamlit
     """
-    # Obtener estado del bracket desde session_state
-    bracket_key = f'bracket_state_{categoria_id}'
-    if bracket_key not in st.session_state:
-        st.session_state[bracket_key] = {}
-    
-    bracket_state = st.session_state[bracket_key]
-    
-    # Generar HTML
-    html_code = generate_bracket_html(players, bracket_state, categoria_id, puede_editar)
-    
-    # Calcular altura dinámica basada en el número de jugadores
+    # Calcular estructura básica
     num_players = len(players)
     num_rounds = math.ceil(math.log2(num_players)) if num_players > 1 else 1
     next_power = 2 ** num_rounds
-    base_height = max(next_power * 55, 400)  # 55px por jugador mínimo
-    dynamic_height = min(base_height + 120, 1200)  # Cap en 1200px
+    
+    # Obtener estado del bracket desde session_state
+    bracket_key = f'bracket_state_{categoria_id}'
+    campeon_key = f'campeon_{categoria_id}'
+    
+    # Instanciar DB
+    db = DatabaseOperations()
+    
+    # Intentar cargar desde DB (para tener datos frescos en tiempo real)
+    # Convertir keys de string a int porque JSONB guarda todo como string
+    db_state_data = db.obtener_estado_llaves(categoria_id)
+    
+    if db_state_data:
+        raw_state = db_state_data.get('bracket_state', {})
+        # Convertir claves numéricas de vuelta a int
+        converted_state = {}
+        for k, v in raw_state.items():
+            if k.isdigit():
+                converted_state[int(k)] = v
+            else:
+                converted_state[k] = v
+        
+        # Actualizar session_state con datos frescos de la DB
+        st.session_state[bracket_key] = converted_state
+        if db_state_data.get('campeon'):
+            st.session_state[campeon_key] = db_state_data['campeon']
+    
+    if bracket_key not in st.session_state:
+        st.session_state[bracket_key] = {}
+        
+    bracket_state = st.session_state[bracket_key]
+    
+    # Inicializar bracket si está vacío
+    if not bracket_state or 1 not in bracket_state:
+        players_init = players.copy()
+        while len(players_init) < next_power:
+            players_init.append("BYE")
+        bracket_state[1] = players_init[:]
+        for r in range(2, num_rounds + 1):
+            prev = bracket_state[r - 1]
+            bracket_state[r] = [None] * (len(prev) // 2)
+        
+        # Procesar BYEs automáticamente
+        for r in range(1, num_rounds):
+            rplayers = bracket_state[r]
+            for i in range(0, len(rplayers), 2):
+                p1 = rplayers[i]
+                p2 = rplayers[i + 1] if i + 1 < len(rplayers) else None
+                if p1 == "BYE" and p2 and p2 != "BYE":
+                    bracket_state[r + 1][i // 2] = p2
+                elif p2 == "BYE" and p1 and p1 != "BYE":
+                    bracket_state[r + 1][i // 2] = p1
+        
+        st.session_state[bracket_key] = bracket_state
+        # Guardar estado inicial DB
+        db.guardar_estado_llaves(categoria_id, bracket_state)
     
     # Procesar selección de campeón desde query params (click en la final)
     params = st.query_params
     bw_champion = params.get('bw_champion', '')
     bw_cat = params.get('bw_cat', '')
     
+    # Procesar selección de rondas intermedias (click en match)
+    bw_round = params.get('bw_round', '')
+    bw_match = params.get('bw_match', '')
+    bw_player_mid = params.get('bw_player', '')
+    
+    # Lógica de actualización CAMPÉON
     if bw_champion and bw_cat and str(categoria_id) == str(bw_cat) and puede_editar:
-        campeon_key = f'campeon_{categoria_id}'
         st.session_state[campeon_key] = bw_champion
+        bracket_state['champion'] = bw_champion
+        
+        # Guardar en DB
+        db.guardar_estado_llaves(categoria_id, bracket_state, bw_champion)
+        
         st.query_params.clear()
         st.rerun()
+
+    # Lógica de actualización RONDAS INTERMEDIAS
+    if bw_round and bw_match and bw_player_mid and bw_cat and str(categoria_id) == str(bw_cat) and puede_editar:
+        try:
+            r_idx = int(bw_round)
+            m_idx = int(bw_match)
+            
+            if r_idx < num_rounds:
+                next_r = r_idx + 1
+                if next_r not in bracket_state:
+                    bracket_state[next_r] = [None] * (len(bracket_state[r_idx]) // 2)
+                
+                # Asegurar que la lista tiene tamaño suficiente (por si acaso)
+                while len(bracket_state[next_r]) <= m_idx:
+                    bracket_state[next_r].append(None)
+
+                bracket_state[next_r][m_idx] = bw_player_mid
+                
+                # Guardar en DB (campeon se mantiene igual, se pasa None para no borrarlo si existe? 
+                # No, el metodo guardar hace upsert. Si paso None en campeon, quizas lo borre?
+                # Revisemos guardar_estado_llaves: usa 'campeon': campeon. Si es None, guarda NULL.
+                # Debo pasar el campeon actual si existe.
+                current_champion = bracket_state.get('champion')
+                db.guardar_estado_llaves(categoria_id, bracket_state, current_champion)
+                
+                st.session_state[bracket_key] = bracket_state
+            
+            st.query_params.clear()
+            st.rerun()
+        except Exception as e:
+            print(f"Error updating bracket: {e}")
+            st.query_params.clear()
+
+    # Generar HTML
+    html_code = generate_bracket_html(players, bracket_state, categoria_id, puede_editar)
+    
+    # Calcular altura dinámica
+    base_height = max(next_power * 55, 400)
+    dynamic_height = min(base_height + 120, 1200)
     
     # Inyectar listener en la página padre para capturar postMessage del iframe
     st.markdown(f"""
@@ -579,9 +682,15 @@ def render_bracket(players, categoria_id, puede_editar=True):
     if (!window._bracketListenerAdded) {{
         window._bracketListenerAdded = true;
         window.addEventListener('message', function(event) {{
-            if (event.data && event.data.type === 'bracket_champion') {{
+            if (event.data && (event.data.type === 'bracket_champion' || event.data.type === 'bracket_update')) {{
                 const url = new URL(window.location.href);
-                url.searchParams.set('bw_champion', event.data.player);
+                if (event.data.type === 'bracket_champion') {{
+                    url.searchParams.set('bw_champion', event.data.player);
+                }} else {{
+                    url.searchParams.set('bw_round', event.data.round);
+                    url.searchParams.set('bw_match', event.data.matchIndex);
+                    url.searchParams.set('bw_player', event.data.player);
+                }}
                 url.searchParams.set('bw_cat', event.data.categoriaId);
                 window.location.href = url.toString();
             }}

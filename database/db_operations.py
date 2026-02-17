@@ -146,3 +146,37 @@ class DatabaseOperations:
         except Exception as e:
             print(f"Error obteniendo partidos: {e}")
             return []
+
+    # Operaciones de Llaves (Persistence)
+    def guardar_estado_llaves(self, categoria_id, estado_json, campeon=None):
+        try:
+            # Verificar si ya existe registro para esta categoría
+            existing = self.supabase.table('brackets').select('id').eq('categoria_id', categoria_id).execute()
+            
+            data = {
+                'categoria_id': categoria_id,
+                'bracket_state': estado_json,
+                'campeon': campeon,
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            if existing.data:
+                # Update
+                self.supabase.table('brackets').update(data).eq('id', existing.data[0]['id']).execute()
+            else:
+                # Insert
+                self.supabase.table('brackets').insert(data).execute()
+            return True
+        except Exception as e:
+            print(f"Error guardando estado llaves: {e}")
+            return False
+
+    def obtener_estado_llaves(self, categoria_id):
+        try:
+            response = self.supabase.table('brackets').select('*').eq('categoria_id', categoria_id).execute()
+            if response.data:
+                return response.data[0] # Retorna diccionario con bracket_state y campeon
+            return None
+        except Exception as e:
+            print(f"Error obteniendo estado llaves: {e}")
+            return None
