@@ -680,7 +680,8 @@ def render_bracket(players, categoria_id, puede_editar=True):
             st.query_params.clear()
             st.rerun()
         except Exception as e:
-            print(f"Error updating bracket: {e}")
+            st.error(f"Error al guardar cambios: {e}")
+            # print(f"Error updating bracket: {e}")
             st.query_params.clear()
 
     # Generar HTML
@@ -690,6 +691,11 @@ def render_bracket(players, categoria_id, puede_editar=True):
     base_height = max(next_power * 55, 400)
     dynamic_height = min(base_height + 120, 1200)
     
+    # Debug temporal (solo visible si hay errores o para verificar)
+    print(f"DEBUG BRACKET STATE: {bracket_state}")
+    # with st.expander("Debug Estado del Bracket (Técnico)"):
+    #    st.write(bracket_state)
+
     # Inyectar listener en la página padre para capturar postMessage del iframe
     st.markdown(f"""
     <script>
