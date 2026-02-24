@@ -269,7 +269,7 @@
             var msg = Object.assign({ isStreamlitMessage: true, type: type }, data || {});
             window.parent.postMessage(msg, "*");
         }
-        function setComponentReady() { sendMessageToStreamlit("streamlit:componentReady"); }
+        function setComponentReady() { sendMessageToStreamlit("streamlit:componentReady", { apiVersion: 1 }); }
         function setFrameHeight(h) { sendMessageToStreamlit("streamlit:setFrameHeight", { height: h || document.body.scrollHeight }); }
         function setComponentValue(value) { sendMessageToStreamlit("streamlit:setComponentValue", { value: value }); }
 
