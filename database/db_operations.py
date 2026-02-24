@@ -77,6 +77,20 @@ class DatabaseOperations:
         except Exception as e:
             print(f"Error actualizando categoria: {e}")
             return False
+
+    def eliminar_categoria(self, categoria_id):
+        """Elimina una categoría y todos sus datos asociados (participantes, partidos, brackets)."""
+        try:
+            # Eliminar datos hijos primero (por si hay FK constraints)
+            self.supabase.table('brackets').delete().eq('categoria_id', categoria_id).execute()
+            self.supabase.table('partidos').delete().eq('categoria_id', categoria_id).execute()
+            self.supabase.table('participantes').delete().eq('categoria_id', categoria_id).execute()
+            # Eliminar la categoría
+            self.supabase.table('categorias').delete().eq('id', categoria_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error eliminando categoria: {e}")
+            return False
     
     # Operaciones de Participantes
     def agregar_participante(self, categoria_id, nombre, cuadro_numero=None, posicion_en_cuadro=None):

@@ -206,7 +206,7 @@ def editar_torneo_page():
         
         for categoria in categorias:
             with st.container():
-                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 1, 1])
                 
                 with col1:
                     st.write(f"**{categoria['nombre']}**")
@@ -222,6 +222,27 @@ def editar_torneo_page():
                         st.session_state.selected_category = categoria
                         st.session_state.current_page = 'crear_categoria'
                         st.rerun()
+                
+                with col5:
+                    if st.button("🗑️", key=f"del_cat_{categoria['id']}", type="secondary", help=f"Eliminar {categoria['nombre']}"):
+                        st.session_state[f'confirm_delete_{categoria["id"]}'] = True
+                
+                # Diálogo de confirmación
+                if st.session_state.get(f'confirm_delete_{categoria["id"]}'):
+                    st.warning(f"¿Estás seguro de eliminar **{categoria['nombre']}**? Se borrarán todos sus participantes, partidos y llaves.")
+                    c_yes, c_no = st.columns(2)
+                    with c_yes:
+                        if st.button("✅ Sí, eliminar", key=f"yes_del_{categoria['id']}", type="primary"):
+                            if db.eliminar_categoria(categoria['id']):
+                                st.session_state.pop(f'confirm_delete_{categoria["id"]}', None)
+                                st.success(f"✅ Categoría '{categoria['nombre']}' eliminada")
+                                st.rerun()
+                            else:
+                                st.error("❌ Error al eliminar la categoría")
+                    with c_no:
+                        if st.button("❌ No, cancelar", key=f"no_del_{categoria['id']}"):
+                            st.session_state.pop(f'confirm_delete_{categoria["id"]}', None)
+                            st.rerun()
             
             st.markdown("---")
         
@@ -348,6 +369,12 @@ def crear_categoria_page():
         submit = st.form_submit_button("💾 Guardar Categoría", type="primary")
         
         if submit and nombre_categoria:
+            # Prevenir doble click
+            if st.session_state.get('_creating_category'):
+                st.warning("⚠️ Ya se está procesando la solicitud...")
+                return
+            st.session_state['_creating_category'] = True
+            
             # Obtener valores de los campos externos
             participantes_text_final = st.session_state.get('participantes_input', '')
             participantes_lista = [p.strip() for p in participantes_text_final.split('\n') if p.strip()]
@@ -356,14 +383,17 @@ def crear_categoria_page():
             
             # Validaciones antes de guardar
             if not nombre_categoria.strip():
+                st.session_state.pop('_creating_category', None)
                 st.error("❌ El nombre de la categoría es obligatorio")
                 return
             
             if len(participantes_lista) < personas_por_cuadro_final:
+                st.session_state.pop('_creating_category', None)
                 st.error(f"❌ Necesitas al menos {personas_por_cuadro_final} participantes")
                 return
             
             if personas_que_pasan_final > personas_por_cuadro_final:
+                st.session_state.pop('_creating_category', None)
                 st.error(f"❌ Las personas que pasan no pueden ser mayor a las personas por cuadro")
                 return
             
@@ -387,7 +417,8 @@ def crear_categoria_page():
                 else:
                     st.error("❌ Error al crear la categoría")
             
-            # Volver a la página anterior
+            # Limpiar flag y volver a la página anterior
+            st.session_state.pop('_creating_category', None)
             st.session_state.selected_category = None
             st.session_state.current_page = 'editar_torneo'
             st.rerun()
