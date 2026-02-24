@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/streamlit-component-lib@2.0.0/dist/streamlit-component-lib.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 40%, #312e81 100%);
+            padding: 40px;
+            overflow-x: auto;
+            min-height: 100vh;
+        }
+        
+        .bracket-title {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .bracket-title h2 {
+            color: #e2e8f0;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .bracket-title p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .bracket-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .bracket {
+            display: flex;
+            gap: 60px;
+            position: relative;
+        }
+        
+        .round {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 200px;
+        }
+        
+        .round-label {
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 10px 16px;
+            margin-bottom: 32px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .round-label.final {
+            background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.15));
+            border-color: rgba(251,191,36,0.3);
+            color: #fbbf24;
+        }
+        
+        .match-wrapper {
+            position: relative;
+            margin-bottom: 0;
+        }
+        
+        .match {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            gap: 2px;
+        }
+        
+        .player-slot {
+            display: flex;
+            align-items: center;
+            height: 44px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 0 14px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 10;
+            overflow: hidden;
+        }
+        
+        .player-slot:first-child {
+            border-radius: 8px 8px 2px 2px;
+        }
+        .player-slot:last-child {
+            border-radius: 2px 2px 8px 8px;
+        }
+        
+        .player-slot:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateX(3px);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+        }
+        
+        .player-slot .seed {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .player-slot .name {
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-slot.winner {
+            background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.15));
+            border-color: rgba(34,197,94,0.5);
+            box-shadow: 0 0 16px rgba(34,197,94,0.15);
+        }
+        .player-slot.winner .name {
+            color: #4ade80;
+            font-weight: 700;
+        }
+        .player-slot.winner .seed {
+            background: rgba(34,197,94,0.3);
+            color: #4ade80;
+        }
+        .player-slot.winner::before {
+            content: '✓';
+            position: absolute;
+            right: 12px;
+            color: #4ade80;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .player-slot.bye {
+            background: rgba(255,255,255,0.02);
+            border-style: dashed;
+            border-color: rgba(255,255,255,0.06);
+            cursor: default;
+        }
+        .player-slot.bye:hover {
+            transform: none;
+            background: rgba(255,255,255,0.02);
+            box-shadow: none;
+        }
+        .player-slot.bye .name {
+            color: #475569;
+            font-style: italic;
+        }
+        
+        .player-slot.champion {
+            background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(245,158,11,0.2));
+            border-color: rgba(251,191,36,0.6);
+            box-shadow: 0 0 24px rgba(251,191,36,0.2), 0 0 48px rgba(251,191,36,0.1);
+            animation: champion-glow 2s ease-in-out infinite alternate;
+        }
+        .player-slot.champion .name {
+            color: #fbbf24;
+            font-weight: 800;
+        }
+        .player-slot.champion .seed {
+            background: rgba(251,191,36,0.3);
+            color: #fbbf24;
+        }
+        .player-slot.champion::before {
+            content: '🏆';
+            position: absolute;
+            right: 12px;
+            font-size: 16px;
+        }
+        
+        @keyframes champion-glow {
+            0% { box-shadow: 0 0 24px rgba(251,191,36,0.2), 0 0 48px rgba(251,191,36,0.1); }
+            100% { box-shadow: 0 0 32px rgba(251,191,36,0.35), 0 0 64px rgba(251,191,36,0.15); }
+        }
+        
+        .player-slot.empty {
+            background: rgba(255,255,255,0.02);
+            border-style: dashed;
+            border-color: rgba(255,255,255,0.06);
+            cursor: default;
+        }
+        .player-slot.empty:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .player-slot.empty .name {
+            color: #334155;
+            font-style: italic;
+        }
+        
+        .svg-connectors {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .final-match .player-slot {
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bracket-title">
+        <h2>⚔️ Cuadro Eliminatorio</h2>
+        <p id="subtitle"></p>
+    </div>
+    
+    <div class="bracket-container">
+        <div id="bracket" class="bracket"></div>
+        <svg id="connectors" class="svg-connectors"></svg>
+    </div>
+    
+    <script>
+        let bracketData = null;
+        let bracketState = {};
+        let seedMap = {};
+
+        function onRender(event) {
+            const args = event.detail.args;
+            
+            bracketData = {
+                players: args.players,
+                categoriaId: args.categoria_id,
+                numRounds: args.num_rounds,
+                canEdit: args.can_edit,
+                numOriginalPlayers: args.num_original_players
+            };
+            
+            // Receive state from Python (convert string keys to int)
+            bracketState = {};
+            const rawState = args.bracket_state || {};
+            for (const [k, v] of Object.entries(rawState)) {
+                if (!isNaN(k)) {
+                    bracketState[parseInt(k)] = v;
+                } else {
+                    bracketState[k] = v;
+                }
+            }
+            
+            // Update subtitle
+            document.getElementById('subtitle').textContent = 
+                bracketData.numOriginalPlayers + ' clasificados  •  ' + 
+                bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
+            
+            // Initialize bracket if empty
+            if (Object.keys(bracketState).length === 0) {
+                bracketState[1] = [...bracketData.players];
+                for (let r = 2; r <= bracketData.numRounds; r++) {
+                    const prevRound = bracketState[r - 1];
+                    bracketState[r] = new Array(prevRound.length / 2).fill(null);
+                }
+            }
+            
+            // Process BYEs
+            processByes();
+            
+            // Build seed map
+            seedMap = {};
+            bracketData.players.forEach((p, i) => {
+                if (p !== "BYE") seedMap[p] = i + 1;
+            });
+            
+            renderBracket();
+            Streamlit.setFrameHeight();
+        }
+        
+        function processByes() {
+            for (let round = 1; round < bracketData.numRounds; round++) {
+                const players = bracketState[round];
+                for (let i = 0; i < players.length; i += 2) {
+                    const p1 = players[i];
+                    const p2 = players[i + 1];
+                    
+                    if (p1 === "BYE" && p2 && p2 !== "BYE") {
+                        bracketState[round + 1][Math.floor(i / 2)] = p2;
+                    } else if (p2 === "BYE" && p1 && p1 !== "BYE") {
+                        bracketState[round + 1][Math.floor(i / 2)] = p1;
+                    }
+                }
+            }
+        }
+        
+        function selectWinner(round, matchIndex, player) {
+            if (!bracketData.canEdit || player === "BYE") return;
+            
+            if (round < bracketData.numRounds) {
+                bracketState[round + 1][matchIndex] = player;
+            } else {
+                bracketState['champion'] = player;
+            }
+            renderBracket();
+            
+            // Send updated state back to Python via Streamlit component protocol
+            // Convert int keys to string for JSON serialization
+            const stateToSend = {};
+            for (const [k, v] of Object.entries(bracketState)) {
+                stateToSend[String(k)] = v;
+            }
+            Streamlit.setComponentValue({
+                bracket_state: stateToSend,
+                champion: bracketState['champion'] || null
+            });
+        }
+        
+        function renderBracket() {
+            const bracket = document.getElementById('bracket');
+            bracket.innerHTML = '';
+            
+            const SLOT_HEIGHT = 44;
+            const SLOT_GAP = 2;
+            const MATCH_HEIGHT = SLOT_HEIGHT * 2 + SLOT_GAP;
+            
+            for (let round = 1; round <= bracketData.numRounds; round++) {
+                const roundDiv = document.createElement('div');
+                roundDiv.className = 'round';
+                roundDiv.setAttribute('data-round', round);
+                
+                const label = document.createElement('div');
+                label.className = 'round-label';
+                if (round === bracketData.numRounds) {
+                    label.classList.add('final');
+                    label.textContent = '🏆 FINAL';
+                } else if (round === bracketData.numRounds - 1 && bracketData.numRounds > 2) {
+                    label.textContent = 'SEMIFINAL';
+                } else if (round === bracketData.numRounds - 2 && bracketData.numRounds > 3) {
+                    label.textContent = 'CUARTOS';
+                } else {
+                    label.textContent = 'RONDA ' + round;
+                }
+                roundDiv.appendChild(label);
+                
+                const players = bracketState[round];
+                const verticalSpacing = MATCH_HEIGHT * Math.pow(2, round - 1);
+                
+                for (let i = 0; i < players.length; i += 2) {
+                    const matchWrapper = document.createElement('div');
+                    matchWrapper.className = 'match-wrapper';
+                    
+                    const extraGap = round === 1 ? 12 : 0;
+                    if (i > 0) {
+                        matchWrapper.style.marginTop = (verticalSpacing - MATCH_HEIGHT + extraGap) + 'px';
+                    } else if (round > 1) {
+                        matchWrapper.style.marginTop = ((verticalSpacing - MATCH_HEIGHT) / 2) + 'px';
+                    }
+                    
+                    const matchDiv = document.createElement('div');
+                    matchDiv.className = 'match';
+                    if (round === bracketData.numRounds) matchDiv.classList.add('final-match');
+                    
+                    const p1 = players[i];
+                    const p2 = players[i + 1];
+                    const matchIndex = Math.floor(i / 2);
+                    let winner = null;
+                    if (round < bracketData.numRounds) {
+                        winner = bracketState[round + 1] ? bracketState[round + 1][matchIndex] : null;
+                    } else {
+                        winner = bracketState['champion'] || bracketState.champion;
+                    }
+                    
+                    const isFinalAndWon = round === bracketData.numRounds && winner;
+                    
+                    [p1, p2].forEach((player, slotIdx) => {
+                        const slot = document.createElement('div');
+                        slot.className = 'player-slot';
+                        
+                        if (!player) {
+                            slot.classList.add('empty');
+                            const nameSpan = document.createElement('span');
+                            nameSpan.className = 'name';
+                            nameSpan.textContent = 'Por definir';
+                            slot.appendChild(nameSpan);
+                        } else if (player === "BYE") {
+                            slot.classList.add('bye');
+                            const nameSpan = document.createElement('span');
+                            nameSpan.className = 'name';
+                            nameSpan.textContent = 'BYE';
+                            slot.appendChild(nameSpan);
+                        } else {
+                            if (isFinalAndWon && winner === player) {
+                                slot.classList.add('champion');
+                            } else if (winner === player) {
+                                slot.classList.add('winner');
+                            }
+                            
+                            const seedSpan = document.createElement('span');
+                            seedSpan.className = 'seed';
+                            seedSpan.textContent = seedMap[player] || '?';
+                            slot.appendChild(seedSpan);
+                            
+                            const nameSpan = document.createElement('span');
+                            nameSpan.className = 'name';
+                            nameSpan.textContent = player;
+                            slot.appendChild(nameSpan);
+                            
+                            if (bracketData.canEdit) {
+                                slot.onclick = () => selectWinner(round, matchIndex, player);
+                            }
+                        }
+                        
+                        slot.setAttribute('data-round', round);
+                        slot.setAttribute('data-match', matchIndex);
+                        slot.setAttribute('data-slot', slotIdx);
+                        
+                        matchDiv.appendChild(slot);
+                    });
+                    
+                    matchWrapper.appendChild(matchDiv);
+                    roundDiv.appendChild(matchWrapper);
+                }
+                
+                bracket.appendChild(roundDiv);
+            }
+            
+            drawConnectors();
+            Streamlit.setFrameHeight();
+        }
+        
+        function drawConnectors() {
+            const svg = document.getElementById('connectors');
+            const container = document.querySelector('.bracket-container');
+            const containerRect = container.getBoundingClientRect();
+            
+            svg.setAttribute('width', container.scrollWidth);
+            svg.setAttribute('height', container.scrollHeight);
+            svg.innerHTML = '';
+            
+            for (let round = 1; round < bracketData.numRounds; round++) {
+                const currentRound = document.querySelector('[data-round="' + round + '"].round');
+                const nextRound = document.querySelector('[data-round="' + (round + 1) + '"].round');
+                
+                if (!currentRound || !nextRound) continue;
+                
+                const currentMatches = currentRound.querySelectorAll('.match');
+                const nextMatches = nextRound.querySelectorAll('.match');
+                
+                for (let m = 0; m < currentMatches.length; m += 2) {
+                    const match1 = currentMatches[m];
+                    const match2 = currentMatches[m + 1];
+                    const nextMatch = nextMatches[Math.floor(m / 2)];
+                    
+                    if (!match1 || !nextMatch) continue;
+                    
+                    const m1Rect = match1.getBoundingClientRect();
+                    const m1CenterY = m1Rect.top + m1Rect.height / 2 - containerRect.top;
+                    const m1Right = m1Rect.right - containerRect.left;
+                    
+                    const nmRect = nextMatch.getBoundingClientRect();
+                    const nmCenterY = nmRect.top + nmRect.height / 2 - containerRect.top;
+                    const nmLeft = nmRect.left - containerRect.left;
+                    
+                    if (match2) {
+                        const m2Rect = match2.getBoundingClientRect();
+                        const m2CenterY = m2Rect.top + m2Rect.height / 2 - containerRect.top;
+                        const midX = (m1Right + nmLeft) / 2;
+                        
+                        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path1.setAttribute('d', 
+                            'M ' + m1Right + ' ' + m1CenterY + ' C ' + midX + ' ' + m1CenterY + ', ' + midX + ' ' + nmCenterY + ', ' + nmLeft + ' ' + nmCenterY
+                        );
+                        path1.setAttribute('fill', 'none');
+                        path1.setAttribute('stroke', 'rgba(148,163,184,0.3)');
+                        path1.setAttribute('stroke-width', '2');
+                        svg.appendChild(path1);
+                        
+                        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path2.setAttribute('d', 
+                            'M ' + m1Right + ' ' + m2CenterY + ' C ' + midX + ' ' + m2CenterY + ', ' + midX + ' ' + nmCenterY + ', ' + nmLeft + ' ' + nmCenterY
+                        );
+                        path2.setAttribute('fill', 'none');
+                        path2.setAttribute('stroke', 'rgba(148,163,184,0.3)');
+                        path2.setAttribute('stroke-width', '2');
+                        svg.appendChild(path2);
+                    } else {
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const midX = (m1Right + nmLeft) / 2;
+                        path.setAttribute('d', 
+                            'M ' + m1Right + ' ' + m1CenterY + ' C ' + midX + ' ' + m1CenterY + ', ' + midX + ' ' + nmCenterY + ', ' + nmLeft + ' ' + nmCenterY
+                        );
+                        path.setAttribute('fill', 'none');
+                        path.setAttribute('stroke', 'rgba(148,163,184,0.3)');
+                        path.setAttribute('stroke-width', '2');
+                        svg.appendChild(path);
+                    }
+                }
+            }
+        }
+        
+        window.addEventListener('resize', drawConnectors);
+        
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+        Streamlit.setComponentReady();
+        Streamlit.setFrameHeight();
+    </script>
+</body>
+</html>
