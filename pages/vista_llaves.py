@@ -279,7 +279,7 @@ def vista_llaves_page():
                 st.rerun()
     
     # Renderizar bracket dinámico
-    render_bracket(clasificados, categoria['id'], puede_editar)
+    render_bracket(clasificados, categoria['id'], puede_editar, torneo_id=torneo['id'])
     
     # Mostrar campeón si existe
     campeon_key = f'campeon_{categoria["id"]}'

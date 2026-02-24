@@ -14,7 +14,7 @@ _COMPONENT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "compo
 _bracket_component = components.declare_component("bracket_component", path=_COMPONENT_DIR)
 
 
-def render_bracket(players, categoria_id, puede_editar=True):
+def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     """
     Renderiza el bracket en Streamlit usando un componente custom bidireccional.
     Los clicks en JS se envían directamente a Python via Streamlit.setComponentValue().
@@ -98,6 +98,13 @@ def render_bracket(players, categoria_id, puede_editar=True):
                 if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
                     st.session_state['unsaved_changes'] = False
                     st.success("¡Cambios guardados en base de datos!")
+                    
+                    # Verificar si TODAS las categorías tienen campeón -> finalizar torneo
+                    if current_champion and torneo_id:
+                        torneo_finalizado = db.verificar_torneo_completado(torneo_id)
+                        if torneo_finalizado:
+                            st.balloons()
+                            st.success("🏆 ¡TORNEO FINALIZADO! Todas las categorías tienen campeón.")
                 else:
                     st.error("Error al guardar en base de datos.")
         

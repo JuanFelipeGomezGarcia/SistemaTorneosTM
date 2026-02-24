@@ -180,3 +180,26 @@ class DatabaseOperations:
         except Exception as e:
             print(f"Error obteniendo estado llaves: {e}")
             return None
+
+    def verificar_torneo_completado(self, torneo_id):
+        """Verifica si todas las categorías del torneo tienen campeón.
+        Si es así, actualiza el estado del torneo a 'finalizado'.
+        Retorna True si el torneo se marcó como finalizado."""
+        try:
+            # Obtener todas las categorías del torneo
+            categorias = self.obtener_categorias(torneo_id)
+            if not categorias:
+                return False
+            
+            # Verificar que CADA categoría tiene un campeón en la tabla brackets
+            for cat in categorias:
+                bracket_data = self.obtener_estado_llaves(cat['id'])
+                if not bracket_data or not bracket_data.get('campeon'):
+                    return False  # Al menos una categoría sin campeón
+            
+            # Todas las categorías tienen campeón -> finalizar torneo
+            self.actualizar_estado_torneo(torneo_id, 'finalizado')
+            return True
+        except Exception as e:
+            print(f"Error verificando torneo completado: {e}")
+            return False
