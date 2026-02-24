@@ -369,12 +369,6 @@ def crear_categoria_page():
         submit = st.form_submit_button("💾 Guardar Categoría", type="primary")
         
         if submit and nombre_categoria:
-            # Prevenir doble click
-            if st.session_state.get('_creating_category'):
-                st.warning("⚠️ Ya se está procesando la solicitud...")
-                return
-            st.session_state['_creating_category'] = True
-            
             # Obtener valores de los campos externos
             participantes_text_final = st.session_state.get('participantes_input', '')
             participantes_lista = [p.strip() for p in participantes_text_final.split('\n') if p.strip()]
@@ -383,17 +377,14 @@ def crear_categoria_page():
             
             # Validaciones antes de guardar
             if not nombre_categoria.strip():
-                st.session_state.pop('_creating_category', None)
                 st.error("❌ El nombre de la categoría es obligatorio")
                 return
             
             if len(participantes_lista) < personas_por_cuadro_final:
-                st.session_state.pop('_creating_category', None)
                 st.error(f"❌ Necesitas al menos {personas_por_cuadro_final} participantes")
                 return
             
             if personas_que_pasan_final > personas_por_cuadro_final:
-                st.session_state.pop('_creating_category', None)
                 st.error(f"❌ Las personas que pasan no pueden ser mayor a las personas por cuadro")
                 return
             
@@ -417,8 +408,7 @@ def crear_categoria_page():
                 else:
                     st.error("❌ Error al crear la categoría")
             
-            # Limpiar flag y volver a la página anterior
-            st.session_state.pop('_creating_category', None)
+            # Volver a la página anterior
             st.session_state.selected_category = None
             st.session_state.current_page = 'editar_torneo'
             st.rerun()
