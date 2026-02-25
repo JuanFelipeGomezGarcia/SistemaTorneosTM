@@ -101,6 +101,9 @@ def home_page():
     # Botón crear torneo (solo admin)
     if st.session_state.user_type == "admin":
         if st.button("➕ Crear Nuevo Torneo"):
+            # Limpiar cualquier dato previo
+            st.session_state.selected_tournament = None
+            st.session_state.selected_category = None
             st.session_state.current_page = 'crear_torneo'
             st.rerun()
         st.markdown("---")
@@ -221,6 +224,15 @@ def editar_torneo_page():
     
     # Botón para agregar nueva categoría
     if st.button("➕ Agregar Nueva Categoría"):
+        # Limpiar selected_category para asegurar que se crea una nueva
+        st.session_state.selected_category = None
+        # Limpiar los campos del formulario
+        if 'participantes_input' in st.session_state:
+            del st.session_state['participantes_input']
+        if 'personas_cuadro' in st.session_state:
+            del st.session_state['personas_cuadro']
+        if 'personas_pasan' in st.session_state:
+            del st.session_state['personas_pasan']
         st.session_state.current_page = 'crear_categoria'
         st.rerun()
     
@@ -291,6 +303,13 @@ def crear_categoria_page():
     
     if st.button("← Volver"):
         st.session_state.selected_category = None
+        # Limpiar los campos del formulario al volver
+        if 'participantes_input' in st.session_state:
+            del st.session_state['participantes_input']
+        if 'personas_cuadro' in st.session_state:
+            del st.session_state['personas_cuadro']
+        if 'personas_pasan' in st.session_state:
+            del st.session_state['personas_pasan']
         st.session_state.current_page = 'editar_torneo'
         st.rerun()
     
@@ -436,6 +455,13 @@ def crear_categoria_page():
             
             # Volver a la página anterior
             st.session_state.selected_category = None
+            # Limpiar los campos del formulario después de guardar
+            if 'participantes_input' in st.session_state:
+                del st.session_state['participantes_input']
+            if 'personas_cuadro' in st.session_state:
+                del st.session_state['personas_cuadro']
+            if 'personas_pasan' in st.session_state:
+                del st.session_state['personas_pasan']
             st.session_state.current_page = 'editar_torneo'
             st.rerun()
 
