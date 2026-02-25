@@ -2,13 +2,6 @@ import streamlit as st
 from database.db_operations import DatabaseOperations
 from utils.tournament_utils import generar_cuadros
 
-@st.cache_data(ttl=5)
-def obtener_datos_categoria(_db, categoria_id):
-    """Cachea los datos de la categoría por 5 segundos"""
-    participantes_data = _db.obtener_participantes(categoria_id)
-    partidos_guardados = _db.obtener_partidos(categoria_id)
-    return participantes_data, partidos_guardados
-
 def vista_cuadros_page():
     """Vista de cuadros tipo tabla Round Robin - Diseño Premium con edición inline"""
     
@@ -235,7 +228,7 @@ def vista_cuadros_page():
         st.rerun()
     
     # ─── Obtener datos ───
-    participantes_data, partidos_guardados = obtener_datos_categoria(db, categoria['id'])
+    participantes_data = db.obtener_participantes(categoria['id'])
     participantes = [p['nombre'] for p in participantes_data]
     
     if len(participantes) < 2:
@@ -243,6 +236,7 @@ def vista_cuadros_page():
         return
     
     cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
+    partidos_guardados = db.obtener_partidos(categoria['id'])
     
     total_cuadros = len(cuadros)
     
