@@ -394,12 +394,54 @@ def vista_cuadros_page():
     
     # ─── Botón final ───
     st.markdown("---")
+    
+    # Validar si todos los cuadros están completos
+    todos_completos = True
+    total_partidos_global = 0
+    partidos_completados_global = 0
+    
+    for cuadro_num, participantes_cuadro in cuadros.items():
+        if len(participantes_cuadro) < 2:
+            continue
+        
+        n = len(participantes_cuadro)
+        total_partidos = n * (n - 1) // 2
+        total_partidos_global += total_partidos
+        
+        # Contar partidos completados en este cuadro
+        for i in range(n):
+            for j in range(i + 1, n):
+                encontrado = False
+                for p in partidos_guardados:
+                    if p['cuadro_numero'] == cuadro_num:
+                        if (p['jugador1'] == participantes_cuadro[i] and p['jugador2'] == participantes_cuadro[j]) or \
+                           (p['jugador1'] == participantes_cuadro[j] and p['jugador2'] == participantes_cuadro[i]):
+                            if p['resultado'] and p['resultado'].strip():
+                                partidos_completados_global += 1
+                                encontrado = True
+                                break
+                if encontrado:
+                    break
+    
+    if partidos_completados_global < total_partidos_global:
+        todos_completos = False
+    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
-        if st.button(boton_text, type="primary", use_container_width=True):
-            st.session_state.current_page = 'vista_llaves'
-            st.rerun()
+        if todos_completos:
+            boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
+            if st.button(boton_text, type="primary", use_container_width=True):
+                st.session_state.current_page = 'vista_llaves'
+                st.rerun()
+        else:
+            st.button(
+                f"🏆 Ir a Llaves ({partidos_completados_global}/{total_partidos_global} partidos)",
+                type="primary",
+                use_container_width=True,
+                disabled=True,
+                help="Completa todos los resultados de los cuadros para habilitar las llaves"
+            )
+            st.warning(f"⚠️ Completa todos los resultados de los cuadros para acceder a las llaves. Progreso: {partidos_completados_global}/{total_partidos_global} partidos")
 
 if __name__ == "__main__":
     vista_cuadros_page()
