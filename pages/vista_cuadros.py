@@ -2,6 +2,13 @@ import streamlit as st
 from database.db_operations import DatabaseOperations
 from utils.tournament_utils import generar_cuadros
 
+@st.cache_data(ttl=5)
+def obtener_datos_categoria(_db, categoria_id):
+    """Cachea los datos de la categoría por 5 segundos"""
+    participantes_data = _db.obtener_participantes(categoria_id)
+    partidos_guardados = _db.obtener_partidos(categoria_id)
+    return participantes_data, partidos_guardados
+
 def vista_cuadros_page():
     """Vista de cuadros tipo tabla Round Robin - Diseño Premium con edición inline"""
     
@@ -228,7 +235,7 @@ def vista_cuadros_page():
         st.rerun()
     
     # ─── Obtener datos ───
-    participantes_data = db.obtener_participantes(categoria['id'])
+    participantes_data, partidos_guardados = obtener_datos_categoria(db, categoria['id'])
     participantes = [p['nombre'] for p in participantes_data]
     
     if len(participantes) < 2:
@@ -236,9 +243,17 @@ def vista_cuadros_page():
         return
     
     cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
-    partidos_guardados = db.obtener_partidos(categoria['id'])
     
     total_cuadros = len(cuadros)
+    
+    # Pre-calcular todos los resultado_map de una vez para evitar loops repetidos
+    resultado_maps = {}
+    for cuadro_num in cuadros.keys():
+        resultado_maps[cuadro_num] = {}
+        for p in partidos_guardados:
+            if p['cuadro_numero'] == cuadro_num:
+                key = (p['jugador1'], p['jugador2'])
+                resultado_maps[cuadro_num][key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
     
     # ─── Mostrar cada cuadro ───
     for cuadro_num, participantes_cuadro in cuadros.items():
@@ -248,12 +263,8 @@ def vista_cuadros_page():
         jugadores = participantes_cuadro
         n = len(jugadores)
         
-        # Construir lookup de resultados
-        resultado_map = {}
-        for p in partidos_guardados:
-            if p['cuadro_numero'] == cuadro_num:
-                key = (p['jugador1'], p['jugador2'])
-                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
+        # Usar el resultado_map pre-calculado
+        resultado_map = resultado_maps[cuadro_num]
         
         # Calcular progreso
         total_partidos = n * (n - 1) // 2
@@ -395,7 +406,7 @@ def vista_cuadros_page():
     # ─── Botón final ───
     st.markdown("---")
     
-    # Validar si todos los cuadros están completos (usar la misma lógica que en los headers)
+    # Validar si todos los cuadros están completos (reusar los resultado_maps ya calculados)
     todos_completos = True
     total_partidos_global = 0
     partidos_completados_global = 0
@@ -406,15 +417,9 @@ def vista_cuadros_page():
         
         jugadores = participantes_cuadro
         n = len(jugadores)
+        resultado_map = resultado_maps[cuadro_num]
         
-        # Construir lookup de resultados para este cuadro
-        resultado_map = {}
-        for p in partidos_guardados:
-            if p['cuadro_numero'] == cuadro_num:
-                key = (p['jugador1'], p['jugador2'])
-                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
-        
-        # Calcular progreso (misma lógica que en el header)
+        # Calcular progreso
         total_partidos = n * (n - 1) // 2
         partidos_completados = 0
         for i in range(n):
