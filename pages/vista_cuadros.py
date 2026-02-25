@@ -392,19 +392,14 @@ def vista_cuadros_page():
         
         st.markdown("<br>", unsafe_allow_html=True)
     
-    # ─── Botones finales ───
+    # ─── Botón final ───
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        subcol1, subcol2 = st.columns(2)
-        with subcol1:
-            if st.button("🔄 Actualizar", type="secondary", use_container_width=True):
-                st.rerun()
-        with subcol2:
-            boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
-            if st.button(boton_text, type="primary", use_container_width=True):
-                st.session_state.current_page = 'vista_llaves'
-                st.rerun()
+        boton_text = "🏆 Ir a Llaves" if puede_editar else "🏆 Ver Llaves"
+        if st.button(boton_text, type="primary", use_container_width=True):
+            st.session_state.current_page = 'vista_llaves'
+            st.rerun()
 
 if __name__ == "__main__":
     vista_cuadros_page()
