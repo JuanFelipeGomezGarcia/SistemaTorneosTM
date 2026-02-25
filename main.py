@@ -116,7 +116,10 @@ def home_page():
     
     for torneo in torneos:
         with st.container():
-            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            if st.session_state.user_type == "admin":
+                col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 1, 1])
+            else:
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
             
             with col1:
                 st.write(f"**{torneo['nombre']}**")
@@ -134,6 +137,29 @@ def home_page():
                     st.session_state.selected_tournament = torneo
                     st.session_state.current_page = 'vista_categorias'
                     st.rerun()
+            
+            # Botón eliminar solo para admin
+            if st.session_state.user_type == "admin":
+                with col5:
+                    if st.button("🗑️", key=f"del_torneo_{torneo['id']}", type="secondary", help=f"Eliminar {torneo['nombre']}"):
+                        st.session_state[f'confirm_delete_torneo_{torneo["id"]}'] = True
+            
+            # Diálogo de confirmación para eliminar torneo
+            if st.session_state.get(f'confirm_delete_torneo_{torneo["id"]}'):
+                st.warning(f"⚠️ ¿Estás seguro de eliminar el torneo **{torneo['nombre']}**? Se borrarán todas sus categorías, participantes, partidos y llaves. Esta acción no se puede deshacer.")
+                c_yes, c_no = st.columns(2)
+                with c_yes:
+                    if st.button("✅ Sí, eliminar torneo", key=f"yes_del_torneo_{torneo['id']}", type="primary"):
+                        if db.eliminar_torneo(torneo['id']):
+                            st.session_state.pop(f'confirm_delete_torneo_{torneo["id"]}', None)
+                            st.success(f"✅ Torneo '{torneo['nombre']}' eliminado exitosamente")
+                            st.rerun()
+                        else:
+                            st.error("❌ Error al eliminar el torneo")
+                with c_no:
+                    if st.button("❌ No, cancelar", key=f"no_del_torneo_{torneo['id']}"):
+                        st.session_state.pop(f'confirm_delete_torneo_{torneo["id"]}', None)
+                        st.rerun()
         
         st.markdown("---")
 

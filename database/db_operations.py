@@ -44,6 +44,23 @@ class DatabaseOperations:
             print(f"Error actualizando estado torneo: {e}")
             return False
     
+    def eliminar_torneo(self, torneo_id):
+        """Elimina un torneo y todos sus datos asociados (categorías, participantes, partidos, brackets)."""
+        try:
+            # Obtener todas las categorías del torneo
+            categorias = self.obtener_categorias(torneo_id)
+            
+            # Eliminar cada categoría (esto eliminará en cascada participantes, partidos, brackets)
+            for categoria in categorias:
+                self.eliminar_categoria(categoria['id'])
+            
+            # Eliminar el torneo
+            self.supabase.table('torneos').delete().eq('id', torneo_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error eliminando torneo: {e}")
+            return False
+    
     # Operaciones de Categorías
     def crear_categoria(self, torneo_id, nombre, cantidad_cuadros, personas_por_cuadro):
         try:
