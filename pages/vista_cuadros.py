@@ -242,12 +242,41 @@ def vista_cuadros_page():
     
     # Pre-calcular todos los resultado_map de una vez para evitar loops repetidos
     resultado_maps = {}
-    for cuadro_num in cuadros.keys():
+    progreso_cuadros = {}  # Guardar progreso de cada cuadro
+    total_partidos_global = 0
+    partidos_completados_global = 0
+    
+    for cuadro_num, participantes_cuadro in cuadros.items():
+        if len(participantes_cuadro) < 2:
+            continue
+            
+        # Construir resultado_map
         resultado_maps[cuadro_num] = {}
         for p in partidos_guardados:
             if p['cuadro_numero'] == cuadro_num:
                 key = (p['jugador1'], p['jugador2'])
                 resultado_maps[cuadro_num][key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
+        
+        # Calcular progreso de este cuadro
+        jugadores = participantes_cuadro
+        n = len(jugadores)
+        total_partidos = n * (n - 1) // 2
+        partidos_completados = 0
+        
+        for i in range(n):
+            for j in range(i + 1, n):
+                res = resultado_maps[cuadro_num].get((jugadores[i], jugadores[j]))
+                if res and res['resultado']:
+                    partidos_completados += 1
+        
+        progreso_cuadros[cuadro_num] = {
+            'total': total_partidos,
+            'completados': partidos_completados,
+            'porcentaje': (partidos_completados / total_partidos * 100) if total_partidos > 0 else 0
+        }
+        
+        total_partidos_global += total_partidos
+        partidos_completados_global += partidos_completados
     
     # ─── Mostrar cada cuadro ───
     for cuadro_num, participantes_cuadro in cuadros.items():
@@ -260,16 +289,11 @@ def vista_cuadros_page():
         # Usar el resultado_map pre-calculado
         resultado_map = resultado_maps[cuadro_num]
         
-        # Calcular progreso
-        total_partidos = n * (n - 1) // 2
-        partidos_completados = 0
-        for i in range(n):
-            for j in range(i + 1, n):
-                res = resultado_map.get((jugadores[i], jugadores[j]))
-                if res and res['resultado']:
-                    partidos_completados += 1
-        
-        progreso_pct = (partidos_completados / total_partidos * 100) if total_partidos > 0 else 0
+        # Usar el progreso pre-calculado
+        progreso = progreso_cuadros[cuadro_num]
+        partidos_completados = progreso['completados']
+        total_partidos = progreso['total']
+        progreso_pct = progreso['porcentaje']
         
         # ── Header del cuadro ──
         st.markdown(f"""
@@ -400,33 +424,8 @@ def vista_cuadros_page():
     # ─── Botón final ───
     st.markdown("---")
     
-    # Validar si todos los cuadros están completos (reusar los resultado_maps ya calculados)
-    todos_completos = True
-    total_partidos_global = 0
-    partidos_completados_global = 0
-    
-    for cuadro_num, participantes_cuadro in cuadros.items():
-        if len(participantes_cuadro) < 2:
-            continue
-        
-        jugadores = participantes_cuadro
-        n = len(jugadores)
-        resultado_map = resultado_maps[cuadro_num]
-        
-        # Calcular progreso
-        total_partidos = n * (n - 1) // 2
-        partidos_completados = 0
-        for i in range(n):
-            for j in range(i + 1, n):
-                res = resultado_map.get((jugadores[i], jugadores[j]))
-                if res and res['resultado']:
-                    partidos_completados += 1
-        
-        total_partidos_global += total_partidos
-        partidos_completados_global += partidos_completados
-    
-    if partidos_completados_global < total_partidos_global:
-        todos_completos = False
+    # Usar los totales ya calculados
+    todos_completos = (partidos_completados_global >= total_partidos_global)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
