@@ -395,7 +395,7 @@ def vista_cuadros_page():
     # ─── Botón final ───
     st.markdown("---")
     
-    # Validar si todos los cuadros están completos
+    # Validar si todos los cuadros están completos (usar la misma lógica que en los headers)
     todos_completos = True
     total_partidos_global = 0
     partidos_completados_global = 0
@@ -404,24 +404,27 @@ def vista_cuadros_page():
         if len(participantes_cuadro) < 2:
             continue
         
-        n = len(participantes_cuadro)
-        total_partidos = n * (n - 1) // 2
-        total_partidos_global += total_partidos
+        jugadores = participantes_cuadro
+        n = len(jugadores)
         
-        # Contar partidos completados en este cuadro
+        # Construir lookup de resultados para este cuadro
+        resultado_map = {}
+        for p in partidos_guardados:
+            if p['cuadro_numero'] == cuadro_num:
+                key = (p['jugador1'], p['jugador2'])
+                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
+        
+        # Calcular progreso (misma lógica que en el header)
+        total_partidos = n * (n - 1) // 2
+        partidos_completados = 0
         for i in range(n):
             for j in range(i + 1, n):
-                encontrado = False
-                for p in partidos_guardados:
-                    if p['cuadro_numero'] == cuadro_num:
-                        if (p['jugador1'] == participantes_cuadro[i] and p['jugador2'] == participantes_cuadro[j]) or \
-                           (p['jugador1'] == participantes_cuadro[j] and p['jugador2'] == participantes_cuadro[i]):
-                            if p['resultado'] and p['resultado'].strip():
-                                partidos_completados_global += 1
-                                encontrado = True
-                                break
-                if encontrado:
-                    break
+                res = resultado_map.get((jugadores[i], jugadores[j]))
+                if res and res['resultado']:
+                    partidos_completados += 1
+        
+        total_partidos_global += total_partidos
+        partidos_completados_global += partidos_completados
     
     if partidos_completados_global < total_partidos_global:
         todos_completos = False
