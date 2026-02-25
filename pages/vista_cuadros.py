@@ -441,7 +441,11 @@ def vista_cuadros_page():
                 disabled=True,
                 help="Completa todos los resultados de los cuadros para habilitar las llaves"
             )
-            st.warning(f"⚠️ Completa todos los resultados de los cuadros para acceder a las llaves. Progreso: {partidos_completados_global}/{total_partidos_global} partidos")
+            # Mensaje diferente para admin y competidor
+            if es_admin:
+                st.warning(f"⚠️ Completa todos los resultados de los cuadros para acceder a las llaves. Progreso: {partidos_completados_global}/{total_partidos_global} partidos")
+            else:
+                st.info(f"ℹ️ Las llaves estarán disponibles cuando se completen todos los resultados. Progreso: {partidos_completados_global}/{total_partidos_global} partidos")
 
 if __name__ == "__main__":
     vista_cuadros_page()
