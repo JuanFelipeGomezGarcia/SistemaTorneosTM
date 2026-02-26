@@ -31,13 +31,9 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     # Instanciar DB
     db = DatabaseOperations()
     
-    # Cargar desde DB SOLO si no hay estado local Y es la primera vez
+    # Cargar desde DB SOLO si no hay estado local
     if bracket_key not in st.session_state:
-        # Inicializar con estado vacío primero
         st.session_state[bracket_key] = {}
-        st.session_state[f'{bracket_key}_loaded_from_db'] = False
-        
-        # Intentar cargar desde BD solo la primera vez
         db_state_data = db.obtener_estado_llaves(categoria_id)
         if db_state_data:
             raw_state = db_state_data.get('bracket_state', {})
@@ -48,7 +44,6 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
                 else:
                     converted_state[k] = v
             st.session_state[bracket_key] = converted_state
-            st.session_state[f'{bracket_key}_loaded_from_db'] = True
             if db_state_data.get('campeon'):
                 st.session_state[campeon_key] = db_state_data['campeon']
     
@@ -91,7 +86,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     base_height = max(next_power * 55, 400)
     dynamic_height = min(base_height + 120, 1200)
     
-    # Botón de GUARDAR CAMBIOS (antes del bracket para que sea visible)
+    # Botón de GUARDAR CAMBIOS
     if puede_editar:
         col_save, col_status = st.columns([1, 4])
         with col_save:
@@ -126,7 +121,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
         height=dynamic_height,
     )
     
-    # Procesar valor de retorno del componente (actualización de estado desde JS)
+    # Procesar valor de retorno del componente
     # IMPORTANTE: Solo actualizar session_state, NO guardar en BD
     if component_value is not None:
         new_state_raw = component_value.get('bracket_state', {})
