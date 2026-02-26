@@ -303,10 +303,11 @@
                         }
                     }
                 }
-                
+
                 // Solo actualizar si el estado realmente cambió desde Python
+                // Y si no hay una actualización local pendiente (debounce en curso)
                 var stateChanged = JSON.stringify(newState) !== JSON.stringify(lastReceivedState);
-                if (stateChanged || !renderEventReceived) {
+                if ((stateChanged || !renderEventReceived) && !pendingUpdate) {
                     bracketState = newState;
                     lastReceivedState = JSON.parse(JSON.stringify(newState));
 
@@ -352,6 +353,9 @@
             }
         }
 
+        var debounceTimer = null;
+        var pendingUpdate = false;
+
         function selectWinner(round, matchIndex, player) {
             if (!bracketData.canEdit || player === "BYE") return;
             if (round < bracketData.numRounds) {
@@ -361,17 +365,25 @@
             }
             renderBracket();
 
-            // Send full state back to Python
-            var stateToSend = {};
-            for (var k in bracketState) {
-                if (bracketState.hasOwnProperty(k)) {
-                    stateToSend[String(k)] = bracketState[k];
+            // Mark that we have a pending local update (prevents render event from overwriting)
+            pendingUpdate = true;
+
+            // Debounce: wait 1s after the last click before sending state to Python
+            // This prevents rapid clicks from causing multiple reruns that overwrite state
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                var stateToSend = {};
+                for (var k in bracketState) {
+                    if (bracketState.hasOwnProperty(k)) {
+                        stateToSend[String(k)] = bracketState[k];
+                    }
                 }
-            }
-            setComponentValue({
-                bracket_state: stateToSend,
-                champion: bracketState['champion'] || null
-            });
+                pendingUpdate = false;
+                setComponentValue({
+                    bracket_state: stateToSend,
+                    champion: bracketState['champion'] || null
+                });
+            }, 1000);
         }
 
         function renderBracket() {
