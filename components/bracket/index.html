@@ -250,6 +250,52 @@
         .final-match .player-slot {
             border-width: 2px;
         }
+
+        .save-bar {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .save-bar.visible {
+            display: flex;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .unsaved-badge {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -258,6 +304,12 @@
         <h2>&#9876;&#65039; Cuadro Eliminatorio</h2>
         <p id="subtitle"></p>
     </div>
+
+    <div class="save-bar" id="saveBar">
+        <span class="unsaved-badge">⚠️ Cambios sin guardar</span>
+        <button class="save-btn" onclick="saveToStreamlit()">💾 Guardar Cambios</button>
+    </div>
+
     <div class="bracket-container">
         <div id="bracket" class="bracket"></div>
         <svg id="connectors" class="svg-connectors"></svg>
@@ -277,7 +329,7 @@
         var bracketState = {};
         var seedMap = {};
         var renderEventReceived = false;
-        var lastReceivedState = null; // Para detectar cambios reales
+        var hasLocalChanges = false;
 
         // Listen for render events from Streamlit
         window.addEventListener("message", function (event) {
@@ -291,30 +343,20 @@
                     numOriginalPlayers: args.num_original_players
                 };
 
-                // Receive state from Python (convert string keys to int)
-                var newState = {};
-                var rawState = args.bracket_state || {};
-                for (var k in rawState) {
-                    if (rawState.hasOwnProperty(k)) {
-                        if (!isNaN(k)) {
-                            newState[parseInt(k)] = rawState[k];
-                        } else {
-                            newState[k] = rawState[k];
+                // ONLY load state from Python if we have NO local changes
+                if (!hasLocalChanges || !renderEventReceived) {
+                    var newState = {};
+                    var rawState = args.bracket_state || {};
+                    for (var k in rawState) {
+                        if (rawState.hasOwnProperty(k)) {
+                            if (!isNaN(k)) {
+                                newState[parseInt(k)] = rawState[k];
+                            } else {
+                                newState[k] = rawState[k];
+                            }
                         }
                     }
-                }
-
-                // Solo actualizar si el estado realmente cambió desde Python
-                // Y si no hay una actualización local pendiente (debounce en curso)
-                var stateChanged = JSON.stringify(newState) !== JSON.stringify(lastReceivedState);
-                if ((stateChanged || !renderEventReceived) && !pendingUpdate) {
                     bracketState = newState;
-                    lastReceivedState = JSON.parse(JSON.stringify(newState));
-
-                    // Update subtitle
-                    document.getElementById('subtitle').textContent =
-                        bracketData.numOriginalPlayers + ' clasificados  \u2022  ' +
-                        bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
 
                     // Initialize bracket if empty
                     if (Object.keys(bracketState).length === 0) {
@@ -326,14 +368,19 @@
                     }
 
                     processByes();
-
-                    seedMap = {};
-                    bracketData.players.forEach(function (p, i) {
-                        if (p !== "BYE") seedMap[p] = i + 1;
-                    });
-
-                    renderBracket();
                 }
+
+                // Update subtitle always
+                document.getElementById('subtitle').textContent =
+                    bracketData.numOriginalPlayers + ' clasificados  \u2022  ' +
+                    bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
+
+                seedMap = {};
+                bracketData.players.forEach(function (p, i) {
+                    if (p !== "BYE") seedMap[p] = i + 1;
+                });
+
+                renderBracket();
                 renderEventReceived = true;
             }
         });
@@ -353,9 +400,6 @@
             }
         }
 
-        var debounceTimer = null;
-        var pendingUpdate = false;
-
         function selectWinner(round, matchIndex, player) {
             if (!bracketData.canEdit || player === "BYE") return;
             if (round < bracketData.numRounds) {
@@ -363,27 +407,25 @@
             } else {
                 bracketState['champion'] = player;
             }
+            hasLocalChanges = true;
+            document.getElementById('saveBar').classList.add('visible');
             renderBracket();
+            // NO setComponentValue here - state stays in JS until explicit save
+        }
 
-            // Mark that we have a pending local update (prevents render event from overwriting)
-            pendingUpdate = true;
-
-            // Debounce: wait 1s after the last click before sending state to Python
-            // This prevents rapid clicks from causing multiple reruns that overwrite state
-            if (debounceTimer) clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function () {
-                var stateToSend = {};
-                for (var k in bracketState) {
-                    if (bracketState.hasOwnProperty(k)) {
-                        stateToSend[String(k)] = bracketState[k];
-                    }
+        function saveToStreamlit() {
+            var stateToSend = {};
+            for (var k in bracketState) {
+                if (bracketState.hasOwnProperty(k)) {
+                    stateToSend[String(k)] = bracketState[k];
                 }
-                pendingUpdate = false;
-                setComponentValue({
-                    bracket_state: stateToSend,
-                    champion: bracketState['champion'] || null
-                });
-            }, 1000);
+            }
+            hasLocalChanges = false;
+            document.getElementById('saveBar').classList.remove('visible');
+            setComponentValue({
+                bracket_state: stateToSend,
+                champion: bracketState['champion'] || null
+            });
         }
 
         function renderBracket() {
