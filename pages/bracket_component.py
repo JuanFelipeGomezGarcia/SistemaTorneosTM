@@ -93,8 +93,10 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
         with col_save:
             if st.button("💾 Guardar Cambios", type="primary", use_container_width=True):
                 current_champion = bracket_state.get('champion')
+                print(f"[DEBUG] Botón presionado - Guardando en BD...")
                 if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
                     st.session_state['unsaved_changes'] = False
+                    print(f"[DEBUG] Guardado exitoso en BD")
                     st.success("¡Cambios guardados en base de datos!")
                     
                     # Verificar si TODAS las categorías tienen campeón -> finalizar torneo
@@ -104,6 +106,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
                             st.balloons()
                             st.success("🏆 ¡TORNEO FINALIZADO! Todas las categorías tienen campeón.")
                 else:
+                    print(f"[DEBUG] Error al guardar en BD")
                     st.error("Error al guardar en base de datos.")
         
         with col_status:
@@ -123,7 +126,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     )
     
     # Procesar valor de retorno del componente (actualización de estado desde JS)
-    # IMPORTANTE: Solo actualizar session_state, NO hacer rerun
+    # IMPORTANTE: Solo actualizar session_state, NO guardar en BD
     if component_value is not None:
         new_state_raw = component_value.get('bracket_state', {})
         new_champion = component_value.get('champion')
@@ -136,9 +139,11 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
             else:
                 new_state[k] = v
         
-        # Actualizar session_state con el nuevo estado del JS (sin rerun)
+        # SOLO actualizar session_state, NO guardar en BD
         st.session_state[bracket_key] = new_state
         if new_champion:
             st.session_state[campeon_key] = new_champion
         
         st.session_state['unsaved_changes'] = True
+        # DEBUG: Confirmar que NO se está guardando aquí
+        print(f"[DEBUG] Estado actualizado en memoria, NO guardado en BD")
