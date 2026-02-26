@@ -269,6 +269,7 @@ def vista_llaves_page():
             })
     
     # Paso 2: Agrupar por TIER y asignar seeds
+    # Los cuadros ya están ordenados: Cuadro 1 = mejor seed, Cuadro 2 = segundo, etc.
     tiers = {}
     for cuadro_num, ranking in cuadros_rankings.items():
         for jugador_info in ranking:
@@ -277,8 +278,10 @@ def vista_llaves_page():
                 tiers[pos] = []
             tiers[pos].append(jugador_info)
     
+    # Ordenar por NÚMERO DE CUADRO (NO por estadísticas)
+    # Cuadro 1 = mejor seed, Cuadro 2 = segundo, etc.
     for pos in tiers:
-        tiers[pos].sort(key=lambda x: (x['victorias'], x['diff_sets']), reverse=True)
+        tiers[pos].sort(key=lambda x: x['cuadro'])
     
     # Lista de seeds en orden: S1, S2, ..., SN (con info de cuadro)
     seeded = []
@@ -320,39 +323,36 @@ def vista_llaves_page():
             bracket.append(None)  # BYE
     
     # Paso 4: RESOLVER CONFLICTOS de mismo cuadro en Ronda 1
-    # Si dos jugadores del MISMO cuadro se enfrentan en R1, intercambiar
+    # SOLO intercambiar los jugadores de MENOR seed (posición impar del match)
+    # para no mover a los top seeds de sus posiciones
     for m in range(0, len(bracket), 2):
-        p1 = bracket[m]
-        p2 = bracket[m + 1]
+        p1 = bracket[m]      # Top seed del match
+        p2 = bracket[m + 1]  # Bottom seed del match
         
         if p1 is None or p2 is None:
             continue  # Match con BYE, no hay conflicto
         
         if p1['cuadro'] == p2['cuadro']:
-            # ¡Conflicto! Buscar swap con jugador de otro match del mismo tier
+            # ¡Conflicto! Buscar swap SOLO con bottom seeds de otro match
             resolved = False
             for swap_m in range(0, len(bracket), 2):
                 if swap_m == m:
                     continue
-                # Intentar intercambiar p2 con cada jugador del otro match
-                for swap_pos in [swap_m, swap_m + 1]:
-                    swap_p = bracket[swap_pos]
-                    if swap_p is None:
-                        continue
-                    # El swap es válido si:
-                    # 1) swap_p es de diferente cuadro que p1 (resuelve nuestro conflicto)
-                    # 2) p2 no crearía conflicto en el match destino
-                    other_in_swap = bracket[swap_m + 1] if swap_pos == swap_m else bracket[swap_m]
-                    swap_valid = (
-                        swap_p['cuadro'] != p1['cuadro'] and
-                        (other_in_swap is None or p2['cuadro'] != other_in_swap['cuadro'])
-                    )
-                    if swap_valid:
-                        bracket[m + 1] = swap_p
-                        bracket[swap_pos] = p2
-                        resolved = True
-                        break
-                if resolved:
+                swap_bottom = bracket[swap_m + 1]  # Solo considerar bottom seed
+                if swap_bottom is None:
+                    continue
+                swap_top = bracket[swap_m]
+                # El swap es válido si:
+                # 1) swap_bottom no es del mismo cuadro que p1 (resuelve nuestro conflicto)
+                # 2) p2 no crea conflicto con swap_top
+                swap_valid = (
+                    swap_bottom['cuadro'] != p1['cuadro'] and
+                    (swap_top is None or p2['cuadro'] != swap_top['cuadro'])
+                )
+                if swap_valid:
+                    bracket[m + 1] = swap_bottom
+                    bracket[swap_m + 1] = p2
+                    resolved = True
                     break
     
     # Construir lista final
