@@ -14,59 +14,38 @@ _COMPONENT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "compo
 _bracket_component = components.declare_component("bracket_component", path=_COMPONENT_DIR)
 
 
-def generate_seed_order(n_slots):
-    """Genera el orden estándar de seeding para un bracket.
-    Para 8 slots: [0, 7, 3, 4, 1, 6, 2, 5]
-    Esto produce matches: S1vsS8, S4vsS5, S2vsS7, S3vsS6"""
-    if n_slots == 1:
-        return [0]
-    if n_slots == 2:
-        return [0, 1]
-    half = n_slots // 2
-    top_half = generate_seed_order(half)
-    result = []
-    for i in top_half:
-        result.append(i)
-        result.append(n_slots - 1 - i)
-    return result
-
-
 def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None, seed_map=None):
     """
     Renderiza el bracket en Streamlit usando un componente custom bidireccional.
     
     Args:
-        players: Lista de jugadores en ORDEN DE SEED (Seed 1, Seed 2, ..., Seed N).
-                 NO debe contener BYEs.
+        players: Lista de jugadores ya en POSICIÓN FINAL del bracket (incluye BYEs).
+                 El orden refleja el seeding y cross-group matching.
         categoria_id: ID de la categoría.
         puede_editar: Si el usuario puede seleccionar ganadores.
         torneo_id: ID del torneo (para auto-finalización).
         seed_map: Dict {nombre_jugador: número_de_seed} para mostrar seeds correctos.
     """
-    # Calcular estructura básica
-    num_real_players = len(players)
-    num_rounds = math.ceil(math.log2(num_real_players)) if num_real_players > 1 else 1
+    # Contar jugadores reales (sin BYEs)
+    real_players = [p for p in players if p != "BYE"]
+    num_real_players = len(real_players)
+    num_total = len(players)
+    num_rounds = math.ceil(math.log2(num_total)) if num_total > 1 else 1
     next_power = 2 ** num_rounds
     
-    # Generar orden de seeding para el bracket
-    seed_order = generate_seed_order(next_power)
+    # Asegurar que la lista tenga tamaño next_power
+    bracket_players = list(players)
+    while len(bracket_players) < next_power:
+        bracket_players.append("BYE")
     
-    # Colocar jugadores en posiciones correctas del bracket
-    # seed_order[0]=0 → posición 0 del bracket = Seed 1 (players[0])
-    # seed_order[1]=7 → posición 1 del bracket = Seed 8 (players[7] o BYE)
-    bracket_players = []
-    for seed_idx in seed_order:
-        if seed_idx < num_real_players:
-            bracket_players.append(players[seed_idx])
-        else:
-            bracket_players.append("BYE")
-    
-    # Si no se proporcionó seed_map, generar uno
+    # Si no se proporcionó seed_map, generar uno básico
     if seed_map is None:
         seed_map = {}
-        for idx, p in enumerate(players):
-            if p != "BYE":
-                seed_map[p] = idx + 1
+        counter = 1
+        for p in bracket_players:
+            if p != "BYE" and p not in seed_map:
+                seed_map[p] = counter
+                counter += 1
     
     # Keys para session_state
     bracket_key = f'bracket_state_{categoria_id}'
@@ -93,7 +72,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None, see
     
     bracket_state = st.session_state[bracket_key]
     
-    # Inicializar bracket si está vacío (usando los bracket_players ya seeded)
+    # Inicializar bracket si está vacío
     if not bracket_state or 1 not in bracket_state:
         bracket_state[1] = bracket_players[:]
         for r in range(2, num_rounds + 1):
@@ -123,7 +102,6 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None, see
     dynamic_height = min(base_height + 120, 1200)
     
     # Renderizar componente custom bidireccional
-    # El botón de guardar está DENTRO del componente JS (no en Streamlit)
     component_value = _bracket_component(
         players=bracket_players,
         bracket_state=state_for_js,
@@ -154,7 +132,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None, see
         if new_champion:
             st.session_state[campeon_key] = new_champion
         
-        # Guardar automáticamente en DB (el usuario ya pulsó "Guardar" en el JS)
+        # Guardar automáticamente en DB
         if db.guardar_estado_llaves(categoria_id, new_state, new_champion):
             st.success("¡Cambios guardados en base de datos!")
             

@@ -268,7 +268,7 @@ def vista_llaves_page():
                 'posicion': pos_idx + 1
             })
     
-    # Paso 2: Agrupar por TIER (todos los 1°, todos los 2°, etc.)
+    # Paso 2: Agrupar por TIER y asignar seeds
     tiers = {}
     for cuadro_num, ranking in cuadros_rankings.items():
         for jugador_info in ranking:
@@ -277,28 +277,94 @@ def vista_llaves_page():
                 tiers[pos] = []
             tiers[pos].append(jugador_info)
     
-    # Ordenar dentro de cada tier por estadísticas
     for pos in tiers:
         tiers[pos].sort(key=lambda x: (x['victorias'], x['diff_sets']), reverse=True)
     
-    # Paso 3: Lista de seeds en ORDEN LINEAL (Seed 1, Seed 2, ..., Seed N)
-    # NO incluir BYEs aquí — el bracket_component se encarga de colocarlos
-    seeded_players = []
+    # Lista de seeds en orden: S1, S2, ..., SN (con info de cuadro)
+    seeded = []
     for pos in sorted(tiers.keys()):
-        for jugador_info in tiers[pos]:
-            seeded_players.append(jugador_info['nombre'])
+        seeded.extend(tiers[pos])
     
-    # Crear mapa de seeds: {nombre_jugador: número_de_seed}
     seed_map = {}
-    for idx, nombre in enumerate(seeded_players):
-        seed_map[nombre] = idx + 1  # Seed 1, 2, 3, ...
+    for idx, p in enumerate(seeded):
+        seed_map[p['nombre']] = idx + 1
     
-    if len(seeded_players) < 2:
+    n = len(seeded)
+    if n < 2:
         st.warning("⚠️ Se necesitan al menos 2 clasificados. Completa los resultados en los cuadros.")
         return
     
-    # Renderizar bracket con seeding correcto
-    render_bracket(seeded_players, categoria['id'], puede_editar, torneo_id=torneo['id'], seed_map=seed_map)
+    import math
+    next_power = 2 ** math.ceil(math.log2(n)) if n > 1 else 2
+    
+    # Paso 3: Generar orden estándar de seeding
+    def gen_seed_order(size):
+        if size == 1: return [0]
+        if size == 2: return [0, 1]
+        half = size // 2
+        top = gen_seed_order(half)
+        result = []
+        for i in top:
+            result.append(i)
+            result.append(size - 1 - i)
+        return result
+    
+    order = gen_seed_order(next_power)
+    
+    # Colocar en bracket según seed order
+    bracket = []
+    for idx in order:
+        if idx < n:
+            bracket.append(seeded[idx])
+        else:
+            bracket.append(None)  # BYE
+    
+    # Paso 4: RESOLVER CONFLICTOS de mismo cuadro en Ronda 1
+    # Si dos jugadores del MISMO cuadro se enfrentan en R1, intercambiar
+    for m in range(0, len(bracket), 2):
+        p1 = bracket[m]
+        p2 = bracket[m + 1]
+        
+        if p1 is None or p2 is None:
+            continue  # Match con BYE, no hay conflicto
+        
+        if p1['cuadro'] == p2['cuadro']:
+            # ¡Conflicto! Buscar swap con jugador de otro match del mismo tier
+            resolved = False
+            for swap_m in range(0, len(bracket), 2):
+                if swap_m == m:
+                    continue
+                # Intentar intercambiar p2 con cada jugador del otro match
+                for swap_pos in [swap_m, swap_m + 1]:
+                    swap_p = bracket[swap_pos]
+                    if swap_p is None:
+                        continue
+                    # El swap es válido si:
+                    # 1) swap_p es de diferente cuadro que p1 (resuelve nuestro conflicto)
+                    # 2) p2 no crearía conflicto en el match destino
+                    other_in_swap = bracket[swap_m + 1] if swap_pos == swap_m else bracket[swap_m]
+                    swap_valid = (
+                        swap_p['cuadro'] != p1['cuadro'] and
+                        (other_in_swap is None or p2['cuadro'] != other_in_swap['cuadro'])
+                    )
+                    if swap_valid:
+                        bracket[m + 1] = swap_p
+                        bracket[swap_pos] = p2
+                        resolved = True
+                        break
+                if resolved:
+                    break
+    
+    # Construir lista final
+    bracket_players = []
+    for p in bracket:
+        if p is None:
+            bracket_players.append("BYE")
+        else:
+            bracket_players.append(p['nombre'])
+    
+    # Renderizar bracket (la lista ya tiene el orden correcto, NO reordenar)
+    render_bracket(bracket_players, categoria['id'], puede_editar, torneo_id=torneo['id'], seed_map=seed_map)
     
     # Mostrar campeón si existe
     campeon_key = f'campeon_{categoria["id"]}'
