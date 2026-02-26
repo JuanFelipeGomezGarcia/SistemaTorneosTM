@@ -375,10 +375,14 @@
                     bracketData.numOriginalPlayers + ' clasificados  \u2022  ' +
                     bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
 
-                seedMap = {};
-                bracketData.players.forEach(function (p, i) {
-                    if (p !== "BYE") seedMap[p] = i + 1;
-                });
+                // Usar seed_map de Python (tiene los números de seed correctos)
+                seedMap = args.seed_map || {};
+                if (Object.keys(seedMap).length === 0) {
+                    // Fallback: usar índice del array
+                    bracketData.players.forEach(function (p, i) {
+                        if (p !== "BYE") seedMap[p] = i + 1;
+                    });
+                }
 
                 renderBracket();
                 renderEventReceived = true;

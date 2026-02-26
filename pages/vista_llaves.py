@@ -225,7 +225,7 @@ def vista_llaves_page():
     
     # Calcular clasificados con SEEDING correcto
     # Paso 1: Obtener ranking de cada cuadro con estadísticas
-    cuadros_rankings = {}  # {cuadro_num: [(jugador, victorias, diff_sets, cuadro_num, posicion), ...]}
+    cuadros_rankings = {}
     
     for cuadro_num in sorted(cuadros.keys()):
         participantes_cuadro = cuadros[cuadro_num]
@@ -265,12 +265,11 @@ def vista_llaves_page():
                 'victorias': victorias.get(jugador, 0),
                 'diff_sets': sets_ganados.get(jugador, 0) - sets_perdidos.get(jugador, 0),
                 'cuadro': cuadro_num,
-                'posicion': pos_idx + 1  # 1° lugar, 2° lugar, etc.
+                'posicion': pos_idx + 1
             })
     
     # Paso 2: Agrupar por TIER (todos los 1°, todos los 2°, etc.)
-    # Dentro de cada tier, ordenar por estadísticas (victorias, diff de sets)
-    tiers = {}  # {posicion: [jugador_info, ...]}
+    tiers = {}
     for cuadro_num, ranking in cuadros_rankings.items():
         for jugador_info in ranking:
             pos = jugador_info['posicion']
@@ -282,55 +281,24 @@ def vista_llaves_page():
     for pos in tiers:
         tiers[pos].sort(key=lambda x: (x['victorias'], x['diff_sets']), reverse=True)
     
-    # Paso 3: Asignar seeds - Tier 1 primero (mejores seeds), luego Tier 2, etc.
+    # Paso 3: Lista de seeds en ORDEN LINEAL (Seed 1, Seed 2, ..., Seed N)
+    # NO incluir BYEs aquí — el bracket_component se encarga de colocarlos
     seeded_players = []
     for pos in sorted(tiers.keys()):
         for jugador_info in tiers[pos]:
-            seeded_players.append(jugador_info)
+            seeded_players.append(jugador_info['nombre'])
     
-    # Paso 4: Colocar en bracket con formato estándar de seeding
-    # El patrón estándar asegura que Seed 1 vs último, Seed 2 vs penúltimo
-    # y que no se encuentren hasta las rondas finales
-    n = len(seeded_players)
-    if n < 2:
+    # Crear mapa de seeds: {nombre_jugador: número_de_seed}
+    seed_map = {}
+    for idx, nombre in enumerate(seeded_players):
+        seed_map[nombre] = idx + 1  # Seed 1, 2, 3, ...
+    
+    if len(seeded_players) < 2:
         st.warning("⚠️ Se necesitan al menos 2 clasificados. Completa los resultados en los cuadros.")
         return
     
-    import math
-    next_power = 2 ** math.ceil(math.log2(n)) if n > 1 else 2
-    
-    def generate_seed_order(n_slots):
-        """Genera el orden estándar de seeding para un bracket.
-        Para 8 slots: [1, 8, 4, 5, 2, 7, 3, 6]
-        Esto produce matches: 1v8, 4v5, 2v7, 3v6"""
-        if n_slots == 1:
-            return [0]
-        if n_slots == 2:
-            return [0, 1]
-        half = n_slots // 2
-        top_half = generate_seed_order(half)
-        result = []
-        for i in top_half:
-            result.append(i)
-            result.append(n_slots - 1 - i)
-        return result
-    
-    seed_order = generate_seed_order(next_power)
-    
-    # Construir lista de clasificados en el orden correcto para el bracket
-    clasificados = []
-    for seed_idx in seed_order:
-        if seed_idx < n:
-            clasificados.append(seeded_players[seed_idx]['nombre'])
-        else:
-            clasificados.append("BYE")
-    
-    if len(clasificados) < 2:
-        st.warning("⚠️ Se necesitan al menos 2 clasificados. Completa los resultados en los cuadros.")
-        return
-    
-    # Renderizar bracket dinámico
-    render_bracket(clasificados, categoria['id'], puede_editar, torneo_id=torneo['id'])
+    # Renderizar bracket con seeding correcto
+    render_bracket(seeded_players, categoria['id'], puede_editar, torneo_id=torneo['id'], seed_map=seed_map)
     
     # Mostrar campeón si existe
     campeon_key = f'campeon_{categoria["id"]}'
