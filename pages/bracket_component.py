@@ -89,6 +89,29 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     base_height = max(next_power * 55, 400)
     dynamic_height = min(base_height + 120, 1200)
     
+    # Botón de GUARDAR CAMBIOS (antes del bracket para que sea visible)
+    if puede_editar:
+        col_save, col_status = st.columns([1, 4])
+        with col_save:
+            if st.button("💾 Guardar Cambios", type="primary", use_container_width=True):
+                current_champion = bracket_state.get('champion')
+                if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
+                    st.session_state['unsaved_changes'] = False
+                    st.success("¡Cambios guardados en base de datos!")
+                    
+                    # Verificar si TODAS las categorías tienen campeón -> finalizar torneo
+                    if current_champion and torneo_id:
+                        torneo_finalizado = db.verificar_torneo_completado(torneo_id)
+                        if torneo_finalizado:
+                            st.balloons()
+                            st.success("🏆 ¡TORNEO FINALIZADO! Todas las categorías tienen campeón.")
+                else:
+                    st.error("Error al guardar en base de datos.")
+        
+        with col_status:
+            if st.session_state.get('unsaved_changes'):
+                st.warning("⚠️ Tienes cambios sin guardar. Haz click en 'Guardar Cambios'.")
+    
     # Renderizar componente custom bidireccional
     component_value = _bracket_component(
         players=players_for_component,
@@ -102,6 +125,7 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     )
     
     # Procesar valor de retorno del componente (actualización de estado desde JS)
+    # IMPORTANTE: Solo actualizar session_state, NO hacer rerun
     if component_value is not None:
         new_state_raw = component_value.get('bracket_state', {})
         new_champion = component_value.get('champion')
@@ -114,18 +138,9 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
             else:
                 new_state[k] = v
         
-        # Actualizar session_state con el nuevo estado del JS
+        # Actualizar session_state con el nuevo estado del JS (sin rerun)
         st.session_state[bracket_key] = new_state
         if new_champion:
             st.session_state[campeon_key] = new_champion
         
-        # Guardar automáticamente en BD en cada cambio
-        if puede_editar:
-            db.guardar_estado_llaves(categoria_id, new_state, new_champion)
-            
-            # Verificar si TODAS las categorías tienen campeón -> finalizar torneo
-            if new_champion and torneo_id:
-                torneo_finalizado = db.verificar_torneo_completado(torneo_id)
-                if torneo_finalizado:
-                    st.balloons()
-                    st.success("🏆 ¡TORNEO FINALIZADO! Todas las categorías tienen campeón.")
+        st.session_state['unsaved_changes'] = True
