@@ -31,8 +31,13 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     # Instanciar DB
     db = DatabaseOperations()
     
-    # Cargar desde DB SOLO si no hay estado local (primera carga de la página)
+    # Cargar desde DB SOLO si no hay estado local Y es la primera vez
     if bracket_key not in st.session_state:
+        # Inicializar con estado vacío primero
+        st.session_state[bracket_key] = {}
+        st.session_state[f'{bracket_key}_loaded_from_db'] = False
+        
+        # Intentar cargar desde BD solo la primera vez
         db_state_data = db.obtener_estado_llaves(categoria_id)
         if db_state_data:
             raw_state = db_state_data.get('bracket_state', {})
@@ -43,10 +48,9 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
                 else:
                     converted_state[k] = v
             st.session_state[bracket_key] = converted_state
+            st.session_state[f'{bracket_key}_loaded_from_db'] = True
             if db_state_data.get('campeon'):
                 st.session_state[campeon_key] = db_state_data['campeon']
-        else:
-            st.session_state[bracket_key] = {}
     
     bracket_state = st.session_state[bracket_key]
     
@@ -91,12 +95,10 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
     if puede_editar:
         col_save, col_status = st.columns([1, 4])
         with col_save:
-            if st.button("💾 Guardar Cambios", type="primary", use_container_width=True):
+            if st.button("💾 Guardar Cambios", type="primary", use_container_width=True, key=f"save_bracket_{categoria_id}"):
                 current_champion = bracket_state.get('champion')
-                print(f"[DEBUG] Botón presionado - Guardando en BD...")
                 if db.guardar_estado_llaves(categoria_id, bracket_state, current_champion):
                     st.session_state['unsaved_changes'] = False
-                    print(f"[DEBUG] Guardado exitoso en BD")
                     st.success("¡Cambios guardados en base de datos!")
                     
                     # Verificar si TODAS las categorías tienen campeón -> finalizar torneo
@@ -106,7 +108,6 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
                             st.balloons()
                             st.success("🏆 ¡TORNEO FINALIZADO! Todas las categorías tienen campeón.")
                 else:
-                    print(f"[DEBUG] Error al guardar en BD")
                     st.error("Error al guardar en base de datos.")
         
         with col_status:
@@ -145,5 +146,3 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
             st.session_state[campeon_key] = new_champion
         
         st.session_state['unsaved_changes'] = True
-        # DEBUG: Confirmar que NO se está guardando aquí
-        print(f"[DEBUG] Estado actualizado en memoria, NO guardado en BD")
