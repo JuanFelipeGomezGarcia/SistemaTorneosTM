@@ -277,6 +277,7 @@
         var bracketState = {};
         var seedMap = {};
         var renderEventReceived = false;
+        var lastReceivedState = null; // Para detectar cambios reales
 
         // Listen for render events from Streamlit
         window.addEventListener("message", function (event) {
@@ -291,40 +292,47 @@
                 };
 
                 // Receive state from Python (convert string keys to int)
-                bracketState = {};
+                var newState = {};
                 var rawState = args.bracket_state || {};
                 for (var k in rawState) {
                     if (rawState.hasOwnProperty(k)) {
                         if (!isNaN(k)) {
-                            bracketState[parseInt(k)] = rawState[k];
+                            newState[parseInt(k)] = rawState[k];
                         } else {
-                            bracketState[k] = rawState[k];
+                            newState[k] = rawState[k];
                         }
                     }
                 }
+                
+                // Solo actualizar si el estado realmente cambió desde Python
+                var stateChanged = JSON.stringify(newState) !== JSON.stringify(lastReceivedState);
+                if (stateChanged || !renderEventReceived) {
+                    bracketState = newState;
+                    lastReceivedState = JSON.parse(JSON.stringify(newState));
 
-                // Update subtitle
-                document.getElementById('subtitle').textContent =
-                    bracketData.numOriginalPlayers + ' clasificados  \u2022  ' +
-                    bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
+                    // Update subtitle
+                    document.getElementById('subtitle').textContent =
+                        bracketData.numOriginalPlayers + ' clasificados  \u2022  ' +
+                        bracketData.numRounds + ' ronda' + (bracketData.numRounds > 1 ? 's' : '');
 
-                // Initialize bracket if empty
-                if (Object.keys(bracketState).length === 0) {
-                    bracketState[1] = bracketData.players.slice();
-                    for (var r = 2; r <= bracketData.numRounds; r++) {
-                        var prevRound = bracketState[r - 1];
-                        bracketState[r] = new Array(prevRound.length / 2).fill(null);
+                    // Initialize bracket if empty
+                    if (Object.keys(bracketState).length === 0) {
+                        bracketState[1] = bracketData.players.slice();
+                        for (var r = 2; r <= bracketData.numRounds; r++) {
+                            var prevRound = bracketState[r - 1];
+                            bracketState[r] = new Array(prevRound.length / 2).fill(null);
+                        }
                     }
+
+                    processByes();
+
+                    seedMap = {};
+                    bracketData.players.forEach(function (p, i) {
+                        if (p !== "BYE") seedMap[p] = i + 1;
+                    });
+
+                    renderBracket();
                 }
-
-                processByes();
-
-                seedMap = {};
-                bracketData.players.forEach(function (p, i) {
-                    if (p !== "BYE") seedMap[p] = i + 1;
-                });
-
-                renderBracket();
                 renderEventReceived = true;
             }
         });
