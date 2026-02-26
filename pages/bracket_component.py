@@ -72,8 +72,6 @@ def render_bracket(players, categoria_id, puede_editar=True, torneo_id=None):
                     bracket_state[r + 1][i // 2] = p1
         
         st.session_state[bracket_key] = bracket_state
-        # Guardar estado inicial en DB
-        db.guardar_estado_llaves(categoria_id, bracket_state)
     
     # Preparar players con BYEs para pasar al componente
     players_for_component = players.copy()
