@@ -273,19 +273,138 @@ if 'selected_category' not in st.session_state:
     st.session_state.selected_category = None
 
 def login_page():
-    """Página de login — Premium"""
+    """Página de login — Premium Redesign"""
+    # CSS específico del login — fullscreen gradient + glassmorphism
     st.markdown("""
-    <div class='premium-hero' style='text-align:center; padding:48px 36px;'>
-        <h1>🏓 Sistema de Torneos</h1>
-        <p>Tenis de Mesa — Gestión profesional de torneos</p>
-    </div>
+    <style>
+        /* Full-page gradient background */
+        .login-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            z-index: -2;
+        }
+        /* Floating orbs */
+        .login-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.35;
+            z-index: -1;
+            animation: float-orb 8s ease-in-out infinite alternate;
+        }
+        .login-orb-1 {
+            width: 350px; height: 350px;
+            background: #667eea;
+            top: -80px; left: -60px;
+        }
+        .login-orb-2 {
+            width: 280px; height: 280px;
+            background: #764ba2;
+            bottom: -60px; right: -40px;
+            animation-delay: 3s;
+        }
+        .login-orb-3 {
+            width: 200px; height: 200px;
+            background: #f093fb;
+            top: 40%; left: 60%;
+            animation-delay: 5s;
+        }
+        @keyframes float-orb {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-30px) scale(1.08); }
+        }
+        /* Glass card */
+        .login-glass {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 44px 40px 36px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+        }
+        .login-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 44px;
+            font-weight: 800;
+            text-align: center;
+            margin: 0;
+            background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .login-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            text-align: center;
+            color: rgba(255,255,255,0.55);
+            margin: 10px 0 32px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .login-divider {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            margin: 24px 0;
+        }
+        .login-section-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .login-desc {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.45);
+            text-align: center;
+            margin: 16px 0 24px;
+            line-height: 1.6;
+        }
+        /* Override Streamlit widgets for dark theme inside login */
+        .login-glass .stRadio > div {
+            justify-content: center;
+        }
+        .login-glass .stRadio label {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        .login-glass .stTextInput label,
+        .login-glass .stForm label {
+            color: rgba(255,255,255,0.7) !important;
+        }
+    </style>
+    
+    <!-- Background -->
+    <div class='login-bg'></div>
+    <div class='login-orb login-orb-1'></div>
+    <div class='login-orb login-orb-2'></div>
+    <div class='login-orb login-orb-3'></div>
     """, unsafe_allow_html=True)
     
+    # Centered card
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-        st.markdown("<h3>👤 Selecciona tu tipo de usuario</h3>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class='login-glass'>
+            <p class='login-title'>🏓 Sistema de Torneos</p>
+            <p class='login-subtitle'>Tenis de Mesa</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("")
+        
+        # User type selector
+        st.markdown("<p class='login-section-title'>Tipo de acceso</p>", unsafe_allow_html=True)
         
         user_type = st.radio(
             "Tipo de usuario:",
@@ -294,13 +413,14 @@ def login_page():
             label_visibility="collapsed"
         )
         
+        st.markdown("<hr class='login-divider'>", unsafe_allow_html=True)
+        
         if user_type == "Administrador":
-            st.markdown("---")
-            st.markdown("<h3>🔐 Iniciar Sesión — Administrador</h3>", unsafe_allow_html=True)
+            st.markdown("<p class='login-section-title'>🔐 Credenciales de administrador</p>", unsafe_allow_html=True)
             
             with st.form("admin_login"):
-                usuario = st.text_input("👤 Usuario")
-                password = st.text_input("🔑 Contraseña", type="password")
+                usuario = st.text_input("Usuario", placeholder="Ingresa tu usuario")
+                password = st.text_input("Contraseña", type="password", placeholder="Ingresa tu contraseña")
                 st.markdown("")
                 submit = st.form_submit_button("Iniciar Sesión", type="primary", use_container_width=True)
                 
@@ -316,21 +436,17 @@ def login_page():
                         st.error("Usuario o contraseña incorrectos")
         
         else:  # Competidor
-            st.markdown("---")
             st.markdown("""
-            <div style='text-align:center; padding:20px 0;'>
-                <p style='color:#64748b; font-family:Inter,sans-serif; font-size:14px;'>
-                    Accede como espectador para ver los torneos, cuadros y llaves en tiempo real
-                </p>
-            </div>
+            <p class='login-desc'>
+                Accede como espectador para ver torneos, cuadros y llaves en tiempo real.
+                No necesitas una cuenta para continuar.
+            </p>
             """, unsafe_allow_html=True)
             if st.button("🏓 Continuar como Competidor", type="primary", use_container_width=True):
                 st.session_state.user_type = "competitor"
                 st.session_state.authenticated = True
                 st.session_state.current_page = 'home'
                 st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True)
 
 def home_page():
     """Página principal con lista de torneos — Premium"""
