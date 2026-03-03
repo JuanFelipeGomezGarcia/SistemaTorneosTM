@@ -219,51 +219,43 @@ def vista_llaves_page():
     participantes = [p['nombre'] for p in participantes_data]
     
     from utils.tournament_utils import generar_cuadros
+    from pages.vista_cuadros import calcular_ranking_cuadro
     cuadros = generar_cuadros(participantes, categoria['cantidad_cuadros'], categoria['personas_por_cuadro'])
     partidos = db.obtener_partidos(categoria['id'])
     personas_que_pasan = categoria.get('personas_que_pasan', 2)
     
-    # Calcular clasificados con SEEDING correcto
-    # Paso 1: Obtener ranking de cada cuadro con estadísticas
+    # Calcular clasificados con SEEDING correcto usando la función de desempate compartida
     cuadros_rankings = {}
     
     for cuadro_num in sorted(cuadros.keys()):
         participantes_cuadro = cuadros[cuadro_num]
         if len(participantes_cuadro) < 2:
             continue
-            
-        victorias = {p: 0 for p in participantes_cuadro}
-        sets_ganados = {p: 0 for p in participantes_cuadro}
-        sets_perdidos = {p: 0 for p in participantes_cuadro}
         
-        for partido in partidos:
-            if partido['cuadro_numero'] == cuadro_num and partido['ganador']:
-                if partido['ganador'] in victorias:
-                    victorias[partido['ganador']] += 1
-                try:
-                    s1, s2 = map(int, partido['resultado'].split('-'))
-                    if partido['jugador1'] in sets_ganados:
-                        sets_ganados[partido['jugador1']] += s1
-                        sets_perdidos[partido['jugador1']] += s2
-                    if partido['jugador2'] in sets_ganados:
-                        sets_ganados[partido['jugador2']] += s2
-                        sets_perdidos[partido['jugador2']] += s1
-                except:
-                    pass
+        # Construir resultado_map para este cuadro
+        resultado_map = {}
+        for p in partidos:
+            if p['cuadro_numero'] == cuadro_num:
+                key = (p['jugador1'], p['jugador2'])
+                resultado_map[key] = {'resultado': p['resultado'], 'ganador': p['ganador']}
         
-        jugadores_ordenados = sorted(
-            participantes_cuadro, 
-            key=lambda x: (victorias.get(x, 0), sets_ganados.get(x, 0) - sets_perdidos.get(x, 0)), 
-            reverse=True
+        # Filtrar partidos de este cuadro
+        partidos_cuadro = [p for p in partidos if p['cuadro_numero'] == cuadro_num]
+        
+        # Usar la función de ranking con desempates
+        ranking = calcular_ranking_cuadro(
+            participantes_cuadro, resultado_map, partidos_cuadro,
+            categoria_id=categoria['id'], cuadro_num=cuadro_num
         )
         
         cuadros_rankings[cuadro_num] = []
-        for pos_idx in range(min(personas_que_pasan, len(jugadores_ordenados))):
-            jugador = jugadores_ordenados[pos_idx]
+        for pos_idx, r in enumerate(ranking):
+            if pos_idx >= personas_que_pasan:
+                break
             cuadros_rankings[cuadro_num].append({
-                'nombre': jugador,
-                'victorias': victorias.get(jugador, 0),
-                'diff_sets': sets_ganados.get(jugador, 0) - sets_perdidos.get(jugador, 0),
+                'nombre': r['nombre'],
+                'victorias': r['victorias'],
+                'diff_sets': r['sets_ganados'] - r['sets_perdidos'],
                 'cuadro': cuadro_num,
                 'posicion': pos_idx + 1
             })
@@ -301,15 +293,23 @@ def vista_llaves_page():
     next_power = 2 ** math.ceil(math.log2(n)) if n > 1 else 2
     
     # Paso 3: Generar orden estándar de seeding
+    # S1 arriba arriba, S4 arriba-mitad, S3 abajo-mitad, S2 abajo abajo
     def gen_seed_order(size):
-        if size == 1: return [0]
+        """Genera bracket estándar.
+        Para 4: [0,3, 2,1] → S1vS4, S3vS2
+        Para 8: [0,7, 3,4, 2,5, 1,6] → S1vS8, S4vS5, S3vS6, S2vS7"""
+        if size <= 1: return [0]
         if size == 2: return [0, 1]
-        half = size // 2
-        top = gen_seed_order(half)
+        if size == 4: return [0, 3, 2, 1]
+        # Para tamaños mayores: construir recursivamente
+        num_matches = size // 2
+        # Obtener el orden de headers para la mitad del bracket
+        half_headers = gen_seed_order(num_matches)
+        # Expandir: cada header se convierte en un par (header, mirror)
         result = []
-        for i in top:
-            result.append(i)
-            result.append(size - 1 - i)
+        for h in half_headers:
+            result.append(h)
+            result.append(size - 1 - h)
         return result
     
     order = gen_seed_order(next_power)
