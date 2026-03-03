@@ -713,21 +713,47 @@ def vista_cuadros_page():
         
         # Solo mostrar tabla de posiciones si hay al menos un partido completado
         if partidos_completados > 0:
-            # Construir filas HTML
-            filas_html = ""
+            st.markdown(f"<div class='standings-wrapper'><div class='standings-title'>📊 Posiciones — Cuadro {cuadro_num}</div></div>", unsafe_allow_html=True)
+            
+            # Encabezado de la tabla de posiciones con st.columns
+            hdr_cols = st.columns([0.5, 2, 0.6, 0.5, 0.5, 0.7, 2])
+            hdr_cols[0].markdown("<div class='rr-header-cell'>Pos</div>", unsafe_allow_html=True)
+            hdr_cols[1].markdown("<div class='rr-header-cell'>Jugador</div>", unsafe_allow_html=True)
+            hdr_cols[2].markdown("<div class='rr-header-cell'>Vic</div>", unsafe_allow_html=True)
+            hdr_cols[3].markdown("<div class='rr-header-cell'>S+</div>", unsafe_allow_html=True)
+            hdr_cols[4].markdown("<div class='rr-header-cell'>S-</div>", unsafe_allow_html=True)
+            hdr_cols[5].markdown("<div class='rr-header-cell'>Coef</div>", unsafe_allow_html=True)
+            hdr_cols[6].markdown("<div class='rr-header-cell'>Desempate</div>", unsafe_allow_html=True)
+            
+            # Filas de la tabla de posiciones
             for r in ranking:
+                row_cols = st.columns([0.5, 2, 0.6, 0.5, 0.5, 0.7, 2])
+                
                 # Badge de posición
                 pos_class = f"pos-{r['posicion']}" if r['posicion'] <= 3 else "pos-other"
-                pos_badge = f"<span class='pos-badge {pos_class}'>{r['posicion']}</span>"
+                row_cols[0].markdown(f"<div style='text-align:center;padding:8px;'><span class='pos-badge {pos_class}'>{r['posicion']}</span></div>", unsafe_allow_html=True)
                 
-                # Coeficiente formateado
+                # Nombre del jugador
+                row_cols[1].markdown(f"<div class='rr-name-cell'>{r['nombre']}</div>", unsafe_allow_html=True)
+                
+                # Victorias
+                row_cols[2].markdown(f"<div style='text-align:center;padding:10px 6px;font-weight:700;font-size:14px;border:1px solid #e2e8f0;'>{r['victorias']}</div>", unsafe_allow_html=True)
+                
+                # Sets ganados
+                row_cols[3].markdown(f"<div style='text-align:center;padding:10px 6px;color:#166534;font-weight:600;font-size:14px;border:1px solid #e2e8f0;'>{r['sets_ganados']}</div>", unsafe_allow_html=True)
+                
+                # Sets perdidos
+                row_cols[4].markdown(f"<div style='text-align:center;padding:10px 6px;color:#991b1b;font-weight:600;font-size:14px;border:1px solid #e2e8f0;'>{r['sets_perdidos']}</div>", unsafe_allow_html=True)
+                
+                # Coeficiente
                 if r['coeficiente'] == float('inf'):
                     coef_str = "∞"
                 else:
                     coef_str = f"{r['coeficiente']:.2f}"
+                row_cols[5].markdown(f"<div style='text-align:center;padding:10px 6px;font-weight:600;font-size:14px;border:1px solid #e2e8f0;'>{coef_str}</div>", unsafe_allow_html=True)
                 
                 # Badge de método de desempate
-                metodo_html = ""
+                metodo_html = "—"
                 if r['metodo_desempate']:
                     if 'Head-to-head' in r['metodo_desempate']:
                         metodo_html = f"<span class='tiebreak-badge tiebreak-h2h'>{r['metodo_desempate']}</span>"
@@ -737,40 +763,7 @@ def vista_cuadros_page():
                         metodo_html = f"<span class='tiebreak-badge tiebreak-manual'>{r['metodo_desempate']}</span>"
                     elif 'sin resolver' in r['metodo_desempate']:
                         metodo_html = f"<span class='tiebreak-badge tiebreak-unresolved'>{r['metodo_desempate']}</span>"
-                
-                filas_html += f"""
-                <tr>
-                    <td>{pos_badge}</td>
-                    <td style='font-weight:600;'>{r['nombre']}</td>
-                    <td><strong>{r['victorias']}</strong></td>
-                    <td style='color:#166534;'>{r['sets_ganados']}</td>
-                    <td style='color:#991b1b;'>{r['sets_perdidos']}</td>
-                    <td>{coef_str}</td>
-                    <td>{metodo_html}</td>
-                </tr>
-                """
-            
-            st.markdown(f"""
-            <div class='standings-wrapper'>
-                <div class='standings-title'>📊 Posiciones — Cuadro {cuadro_num}</div>
-                <table class='standings-table'>
-                    <thead>
-                        <tr>
-                            <th>Pos</th>
-                            <th>Jugador</th>
-                            <th>Vic</th>
-                            <th>S+</th>
-                            <th>S-</th>
-                            <th>Coef</th>
-                            <th>Desempate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filas_html}
-                    </tbody>
-                </table>
-            </div>
-            """, unsafe_allow_html=True)
+                row_cols[6].markdown(f"<div style='padding:10px 6px;text-align:center;border:1px solid #e2e8f0;'>{metodo_html}</div>", unsafe_allow_html=True)
             
             # ── Selección manual para empates sin resolver ──
             empates_sin_resolver = [r for r in ranking if r['empate_sin_resolver']]
