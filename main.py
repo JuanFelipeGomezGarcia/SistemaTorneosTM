@@ -273,81 +273,32 @@ if 'selected_category' not in st.session_state:
     st.session_state.selected_category = None
 
 def login_page():
-    """Página de login — Clean Professional"""
-    # Espaciado superior
-    st.markdown("<br>", unsafe_allow_html=True)
+    """Página de login — Nativo Streamlit"""
+    # Header nativo
+    st.title("🏓 Sistema de Torneos")
+    st.markdown("### Tenis de Mesa — Gestión profesional de torneos")
+    st.markdown("---")
     
-    # Centrado con columns
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        # Tarjeta principal con gradient top-bar
-        st.markdown("""
-        <div style='background:#ffffff; border-radius:20px; overflow:hidden; 
-                    box-shadow: 0 8px 40px rgba(0,0,0,0.12); border:1px solid #e2e8f0;
-                    margin-bottom: 8px;'>
-            <!-- Barra gradiente superior -->
-            <div style='height:6px; background:linear-gradient(90deg, #667eea, #764ba2, #667eea); 
-                        background-size:200% 100%; animation: shimmer 3s ease infinite;'></div>
-            <style>@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }</style>
-            
-            <!-- Header -->
-            <div style='text-align:center; padding:40px 32px 24px;'>
-                <div style='font-size:56px; margin-bottom:12px;'>🏓</div>
-                <h1 style='font-family:Inter,sans-serif; font-size:28px; font-weight:800; 
-                           color:#1e293b; margin:0; letter-spacing:-0.5px;'>
-                    Sistema de Torneos
-                </h1>
-                <p style='font-family:Inter,sans-serif; font-size:14px; color:#94a3b8; 
-                          margin:6px 0 0; font-weight:500; letter-spacing:1px; text-transform:uppercase;'>
-                    Tenis de Mesa
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Selector de tipo de usuario
-        st.markdown("""
-        <div style='text-align:center; padding:8px 0 4px;'>
-            <p style='font-family:Inter,sans-serif; font-size:13px; color:#94a3b8; 
-                      font-weight:600; text-transform:uppercase; letter-spacing:1px; margin:0;'>
-                Selecciona tu tipo de acceso
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("👤 Selecciona tu tipo de acceso")
         
         user_type = st.radio(
             "Tipo de usuario:",
-            ["👨‍💼 Administrador", "🏓 Competidor"],
-            horizontal=True,
-            label_visibility="collapsed"
+            ["Administrador", "Competidor"],
+            horizontal=True
         )
         
-        is_admin = "Administrador" in user_type
+        st.markdown("---")
         
-        if is_admin:
-            # Panel de admin
-            st.markdown("""
-            <div style='background:#ffffff; border-radius:16px; padding:28px 32px 8px;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border:1px solid #e2e8f0;'>
-                <div style='display:flex; align-items:center; gap:10px; margin-bottom:20px;'>
-                    <div style='width:36px; height:36px; border-radius:10px; 
-                                background:linear-gradient(135deg,#667eea,#764ba2);
-                                display:flex; align-items:center; justify-content:center;
-                                font-size:18px; color:white;'>🔐</div>
-                    <div>
-                        <p style='font-family:Inter,sans-serif; font-size:15px; font-weight:700; 
-                                  color:#1e293b; margin:0;'>Acceso Administrador</p>
-                        <p style='font-family:Inter,sans-serif; font-size:12px; color:#94a3b8; margin:0;'>
-                            Ingresa tus credenciales para gestionar torneos</p>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        if user_type == "Administrador":
+            st.subheader("🔐 Acceso Administrador")
+            st.caption("Ingresa tus credenciales para gestionar torneos")
             
             with st.form("admin_login"):
-                usuario = st.text_input("Usuario", placeholder="Ingresa tu usuario")
-                password = st.text_input("Contraseña", type="password", placeholder="Ingresa tu contraseña")
+                usuario = st.text_input("👤 Usuario")
+                password = st.text_input("🔑 Contraseña", type="password")
                 st.markdown("")
                 submit = st.form_submit_button("🔓 Iniciar Sesión", type="primary", use_container_width=True)
                 
@@ -363,30 +314,10 @@ def login_page():
                         st.error("❌ Usuario o contraseña incorrectos")
         
         else:
-            # Panel de competidor
-            st.markdown("""
-            <div style='background:#ffffff; border-radius:16px; padding:28px 32px;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border:1px solid #e2e8f0;'>
-                <div style='display:flex; align-items:center; gap:10px; margin-bottom:16px;'>
-                    <div style='width:36px; height:36px; border-radius:10px; 
-                                background:linear-gradient(135deg,#3b82f6,#06b6d4);
-                                display:flex; align-items:center; justify-content:center;
-                                font-size:18px; color:white;'>👁️</div>
-                    <div>
-                        <p style='font-family:Inter,sans-serif; font-size:15px; font-weight:700; 
-                                  color:#1e293b; margin:0;'>Modo Espectador</p>
-                        <p style='font-family:Inter,sans-serif; font-size:12px; color:#94a3b8; margin:0;'>
-                            No necesitas cuenta para continuar</p>
-                    </div>
-                </div>
-                <div style='background:#f8fafc; border-radius:12px; padding:16px; margin-bottom:4px;'>
-                    <p style='font-family:Inter,sans-serif; font-size:13px; color:#64748b; 
-                              margin:0; line-height:1.6; text-align:center;'>
-                        ✅ Ver torneos activos &nbsp;&nbsp; ✅ Seguir cuadros en vivo &nbsp;&nbsp; ✅ Ver llaves y resultados
-                    </p>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.subheader("👁️ Modo Espectador")
+            st.caption("No necesitas cuenta para continuar")
+            
+            st.info("✅ Ver torneos activos  •  ✅ Seguir cuadros en vivo  •  ✅ Ver llaves y resultados")
             
             st.markdown("")
             if st.button("🏓 Continuar como Competidor", type="primary", use_container_width=True):
